@@ -147,3 +147,19 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+/.pnp
+/.next/
+/out/
+/build
+.DS_Store
+*.pem
+.pnpm-debug.log*
+.vercel
+next-env.d.ts
+/docs/
+
+# Playwright and Lighthouse CI output
+/test-results/
+/playwright-report/
+/blob-report/
+/.lighthouseci/

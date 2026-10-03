@@ -1,0 +1,276 @@
+/* ==========================================================================
+   1. Import + theme
+   ========================================================================== */
+@import "tailwindcss";
+
+/* Class-based dark mode, toggled by next-themes */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-source-serif), ui-serif, Georgia, serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+}
+
+/* ==========================================================================
+   2. Base styles
+   ========================================================================== */
+@layer base {
+  /* Anchor links clear the sticky navbar */
+  html {
+    @apply scroll-pt-20;
+  }
+
+  /* Smooth scrolling only when motion is allowed */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  /* Visible focus ring on every interactive element */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-sky-700 dark:outline-sky-300;
+  }
+}
+
+/* ==========================================================================
+   3. Layer colours
+
+   Any element with data-layer="interface|application|data|infrastructure"
+   sets --layer-fg (text/rules) and --layer-tint (small backgrounds) for
+   itself and its children. Components never repeat the colour chains.
+   ========================================================================== */
+@layer base {
+  [data-layer="interface"] {
+    --layer-fg: var(--color-sky-700);
+    --layer-tint: var(--color-sky-50);
+    @variant dark {
+      --layer-fg: var(--color-sky-300);
+      --layer-tint: color-mix(in oklab, var(--color-sky-400) 10%, transparent);
+    }
+  }
+
+  [data-layer="application"] {
+    --layer-fg: var(--color-emerald-700);
+    --layer-tint: var(--color-emerald-50);
+    @variant dark {
+      --layer-fg: var(--color-emerald-300);
+      --layer-tint: color-mix(
+        in oklab,
+        var(--color-emerald-400) 10%,
+        transparent
+      );
+    }
+  }
+
+  [data-layer="data"] {
+    --layer-fg: var(--color-amber-700);
+    --layer-tint: var(--color-amber-50);
+    @variant dark {
+      --layer-fg: var(--color-amber-300);
+      --layer-tint: color-mix(
+        in oklab,
+        var(--color-amber-400) 10%,
+        transparent
+      );
+    }
+  }
+
+  [data-layer="infrastructure"] {
+    --layer-fg: var(--color-fuchsia-700);
+    --layer-tint: var(--color-fuchsia-50);
+    @variant dark {
+      --layer-fg: var(--color-fuchsia-300);
+      --layer-tint: color-mix(
+        in oklab,
+        var(--color-fuchsia-400) 10%,
+        transparent
+      );
+    }
+  }
+}
+
+/* ==========================================================================
+   4. Global classes
+   ========================================================================== */
+@layer components {
+  /* ---- Page structure ---- */
+  .container-page {
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .section {
+    @apply py-16 sm:py-20 lg:py-24;
+  }
+
+  /* Combine with .section on every second section */
+  .section-alt {
+    @apply bg-neutral-50 dark:bg-neutral-800/50;
+  }
+
+  /* Border colour for rules and outlines; combine with border, border-t, etc. */
+  .rule {
+    @apply border-neutral-200 dark:border-neutral-700;
+  }
+
+  /* ---- Typography ---- */
+  .type-hero {
+    @apply font-display text-4xl leading-none font-extrabold tracking-tight font-stretch-expanded sm:text-6xl xl:text-7xl;
+  }
+
+  .type-h2 {
+    @apply font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl;
+  }
+
+  .type-h3 {
+    @apply font-display text-xl font-semibold sm:text-2xl;
+  }
+
+  .type-body {
+    @apply max-w-prose font-serif text-base leading-relaxed sm:text-lg;
+  }
+
+  .type-small {
+    @apply font-display text-sm text-neutral-600 dark:text-neutral-400;
+  }
+
+  /* ---- Layout ---- */
+  .layout-cards {
+    @apply grid gap-8 sm:grid-cols-2;
+  }
+
+  .layout-split {
+    @apply grid gap-8 md:grid-cols-2 md:gap-12;
+  }
+
+  /* ---- Buttons and badges ---- */
+  .btn {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-md px-4 py-2 font-display text-sm font-semibold transition-colors duration-200 sm:px-5 sm:py-2.5 sm:text-base;
+  }
+
+  /* Square icon-only button (theme toggle, menu button). Defined after .btn */
+  .btn-icon {
+    @apply size-10 p-0;
+  }
+
+  .btn-primary {
+    @apply bg-sky-700 text-white hover:bg-sky-800 dark:bg-sky-300 dark:text-neutral-900 dark:hover:bg-sky-200;
+  }
+
+  .btn-secondary {
+    @apply border border-neutral-300 text-neutral-900 hover:bg-neutral-100 dark:border-neutral-600 dark:text-neutral-100 dark:hover:bg-neutral-800;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-md bg-neutral-100 px-2 py-0.5 font-display text-sm font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300;
+  }
+
+  /* Inside a data-layer (or with data-layer on the badge itself) */
+  [data-layer] .badge,
+  .badge[data-layer] {
+    background-color: var(--layer-tint);
+    color: var(--layer-fg);
+  }
+
+  /* ---- Stack section ---- */
+  .layer-band {
+    @apply border-t border-l-4 border-t-neutral-200 py-8 pl-4 sm:py-10 sm:pl-6 dark:border-t-neutral-700;
+    border-left-color: var(--layer-fg);
+  }
+
+  /* Layer colour helpers for tags, SVG parts and timeline tech lists */
+  .layer-text {
+    color: var(--layer-fg);
+  }
+
+  .layer-tint {
+    background-color: var(--layer-tint);
+  }
+
+  .layer-rule {
+    border-color: var(--layer-fg);
+  }
+
+  /* SVG shape filled with the layer tint and outlined in the layer colour */
+  .layer-shape {
+    @apply stroke-1;
+    fill: var(--layer-tint);
+    stroke: var(--layer-fg);
+  }
+
+  /* ---- Links ---- */
+  /* inline-block + py-1 lifts the hit area to at least 24px tall */
+  .link {
+    @apply inline-block py-1 font-display font-medium text-sky-700 underline underline-offset-4 transition-colors duration-200 hover:text-sky-800 dark:text-sky-300 dark:hover:text-sky-200;
+  }
+
+  /* ---- Navigation ---- */
+  .nav-link {
+    @apply inline-block py-1 font-display text-sm font-medium text-neutral-600 underline decoration-transparent decoration-2 underline-offset-8 transition-colors duration-200 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100;
+
+    &[data-active="true"] {
+      @apply text-neutral-900 decoration-sky-700 dark:text-neutral-100 dark:decoration-sky-300;
+    }
+  }
+
+  /* Floats over the page, so it gets a shadow */
+  .nav-mobile-menu {
+    @apply absolute inset-x-0 top-full flex flex-col gap-4 border-b border-neutral-200 bg-white px-4 py-4 shadow-md sm:px-6 md:hidden dark:border-neutral-700 dark:bg-neutral-900;
+  }
+
+  /* ---- Experience timeline ---- */
+  .timeline-item {
+    @apply relative border-l border-neutral-200 pb-10 pl-6 last:pb-0 dark:border-neutral-700;
+
+    &::before {
+      @apply absolute top-2 -left-1.75 size-3 rounded-full bg-sky-700 dark:bg-sky-300;
+      content: "";
+    }
+  }
+
+  /* ---- Case-study write-ups ---- */
+  .prose-case-study {
+    @apply max-w-prose font-serif text-base leading-relaxed sm:text-lg;
+
+    & > * + * {
+      @apply mt-6;
+    }
+
+    & h2 {
+      @apply mt-12 font-display text-2xl font-bold tracking-tight sm:text-3xl;
+    }
+
+    & h3 {
+      @apply mt-8 font-display text-xl font-semibold sm:text-2xl;
+    }
+
+    & ul {
+      @apply list-disc pl-6;
+    }
+
+    & ol {
+      @apply list-decimal pl-6;
+    }
+
+    & a {
+      @apply text-sky-700 underline underline-offset-4 hover:text-sky-800 dark:text-sky-300 dark:hover:text-sky-200;
+    }
+
+    & code {
+      @apply rounded-md bg-neutral-100 px-1.5 py-0.5 font-mono text-sm dark:bg-neutral-800;
+    }
+
+    & pre {
+      @apply overflow-x-auto rounded-lg bg-neutral-100 p-4 font-mono text-sm dark:bg-neutral-800;
+
+      & code {
+        @apply bg-transparent p-0;
+      }
+    }
+  }
+}
+
+/* ==========================================================================
+   5. Utilities
+   ========================================================================== */
