@@ -32,6 +32,16 @@
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-sky-700 dark:outline-sky-300;
   }
+
+  /* Inside a layer (diagram, legend) or a project, the ring takes that layer's colour */
+  [data-layer]:focus-visible,
+  [data-layer] :focus-visible {
+    outline-color: var(--layer-fg);
+  }
+
+  [data-main-layer] :focus-visible {
+    outline-color: var(--main-fg);
+  }
 }
 
 /* ==========================================================================
@@ -56,11 +66,7 @@
     --layer-tint: var(--color-emerald-50);
     @variant dark {
       --layer-fg: var(--color-emerald-300);
-      --layer-tint: color-mix(
-        in oklab,
-        var(--color-emerald-400) 10%,
-        transparent
-      );
+      --layer-tint: color-mix(in oklab, var(--color-emerald-400) 10%, transparent);
     }
   }
 
@@ -69,11 +75,7 @@
     --layer-tint: var(--color-amber-50);
     @variant dark {
       --layer-fg: var(--color-amber-300);
-      --layer-tint: color-mix(
-        in oklab,
-        var(--color-amber-400) 10%,
-        transparent
-      );
+      --layer-tint: color-mix(in oklab, var(--color-amber-400) 10%, transparent);
     }
   }
 
@@ -82,11 +84,40 @@
     --layer-tint: var(--color-fuchsia-50);
     @variant dark {
       --layer-fg: var(--color-fuchsia-300);
-      --layer-tint: color-mix(
-        in oklab,
-        var(--color-fuchsia-400) 10%,
-        transparent
-      );
+      --layer-tint: color-mix(in oklab, var(--color-fuchsia-400) 10%, transparent);
+    }
+  }
+}
+
+/* A project's main layer (the one with most of its technologies; see lib/layers.ts)
+   colours its hover border, focus ring and link sweep. It is separate from data-layer
+   so the tags inside a project keep their own layer colours. */
+@layer base {
+  [data-main-layer="interface"] {
+    --main-fg: var(--color-sky-700);
+    @variant dark {
+      --main-fg: var(--color-sky-300);
+    }
+  }
+
+  [data-main-layer="application"] {
+    --main-fg: var(--color-emerald-700);
+    @variant dark {
+      --main-fg: var(--color-emerald-300);
+    }
+  }
+
+  [data-main-layer="data"] {
+    --main-fg: var(--color-amber-700);
+    @variant dark {
+      --main-fg: var(--color-amber-300);
+    }
+  }
+
+  [data-main-layer="infrastructure"] {
+    --main-fg: var(--color-fuchsia-700);
+    @variant dark {
+      --main-fg: var(--color-fuchsia-300);
     }
   }
 }
@@ -95,6 +126,270 @@
    4. Global classes
    ========================================================================== */
 @layer components {
+  /* ---- Glass ---- */
+  /* GlassBackground: fixed behind the page. The blur sits on the inner field and the slow
+     drift on its wrapper, so the blurred picture is made once and only moved afterwards. */
+  .glass-bg {
+    @apply pointer-events-none fixed inset-0 -z-10 overflow-hidden;
+  }
+
+  .glass-drift {
+    @apply size-96 sm:size-128 lg:size-160;
+  }
+
+  .glass-drift:nth-child(1) {
+    @apply absolute -top-1/4 -left-1/4;
+  }
+
+  .glass-drift:nth-child(2) {
+    @apply absolute top-1/4 -right-1/4;
+  }
+
+  .glass-drift:nth-child(3) {
+    @apply absolute -bottom-1/4 left-1/6;
+  }
+
+  .glass-drift:nth-child(4) {
+    @apply absolute -right-1/6 -bottom-1/3;
+  }
+
+  /* Light mode uses the lighter 400 shades: the 700 shades darken the page behind dark text
+     and failed contrast. Dark mode uses the 300 shades, as everywhere else. */
+  .glass-field {
+    @apply size-full rounded-full opacity-15 blur-3xl dark:opacity-15;
+  }
+
+  .glass-field[data-layer="interface"] {
+    @apply bg-sky-400 dark:bg-sky-300;
+  }
+
+  .glass-field[data-layer="application"] {
+    @apply bg-emerald-400 dark:bg-emerald-300;
+  }
+
+  .glass-field[data-layer="data"] {
+    @apply bg-amber-400 dark:bg-amber-300;
+  }
+
+  .glass-field[data-layer="infrastructure"] {
+    @apply bg-fuchsia-400 dark:bg-fuchsia-300;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .glass-drift {
+      animation-direction: alternate;
+      animation-iteration-count: infinite;
+      animation-timing-function: ease-in-out;
+    }
+
+    .glass-drift:nth-child(1) {
+      animation-name: glass-drift-1;
+      animation-duration: 47s;
+    }
+
+    .glass-drift:nth-child(2) {
+      animation-name: glass-drift-2;
+      animation-duration: 59s;
+    }
+
+    .glass-drift:nth-child(3) {
+      animation-name: glass-drift-3;
+      animation-duration: 41s;
+    }
+
+    .glass-drift:nth-child(4) {
+      animation-name: glass-drift-4;
+      animation-duration: 53s;
+    }
+  }
+
+  /* Frosted surfaces. Phones blur less (cheaper); from md up the full blur.
+     .glass-strong is more opaque, for the navbar and the mobile menu. */
+  .glass {
+    @apply border border-white/50 bg-white/60 shadow-lg backdrop-blur-md md:backdrop-blur-xl dark:border-white/10 dark:bg-neutral-900/50 dark:shadow-xl;
+  }
+
+  .glass-strong {
+    @apply border border-white/50 bg-white/90 shadow-lg backdrop-blur-md md:backdrop-blur-xl dark:border-white/10 dark:bg-neutral-900/90 dark:shadow-xl;
+  }
+
+  /* No backdrop-filter support: fall back to an opaque surface so text stays readable */
+  @supports not (backdrop-filter: blur(1px)) {
+    .glass,
+    .glass-strong {
+      @apply bg-white dark:bg-neutral-900;
+    }
+  }
+
+  /* ---- Animated card borders ---- */
+  /* A thin ring over the card's edge with a four-colour sweep travelling around it.
+     The card is `.border-flow` and its first child is a `.border-flow-ring` (BorderFlowRing).
+     The ring is cut out with a mask and does not move; the two gradients inside it (the
+     slow one at rest, a fast one on hover and focus) rotate with `transform`, so the
+     animation stays on the compositor and no JavaScript is involved. Dark mode uses the 400
+     shades at full strength, light mode the 500 shades at lower opacity.
+     A project can narrow the colours with data-flow-1 to data-flow-4 (see lib/layers.ts). */
+  .border-flow {
+    @apply relative;
+    --flow-c-interface: var(--color-sky-500);
+    --flow-c-application: var(--color-emerald-500);
+    --flow-c-data: var(--color-amber-500);
+    --flow-c-infrastructure: var(--color-fuchsia-500);
+    @variant dark {
+      --flow-c-interface: var(--color-sky-400);
+      --flow-c-application: var(--color-emerald-400);
+      --flow-c-data: var(--color-amber-400);
+      --flow-c-infrastructure: var(--color-fuchsia-400);
+    }
+    --flow-1: var(--flow-c-interface);
+    --flow-2: var(--flow-c-application);
+    --flow-3: var(--flow-c-data);
+    --flow-4: var(--flow-c-infrastructure);
+  }
+
+  .border-flow[data-flow-1="interface"] {
+    --flow-1: var(--flow-c-interface);
+  }
+
+  .border-flow[data-flow-1="application"] {
+    --flow-1: var(--flow-c-application);
+  }
+
+  .border-flow[data-flow-1="data"] {
+    --flow-1: var(--flow-c-data);
+  }
+
+  .border-flow[data-flow-1="infrastructure"] {
+    --flow-1: var(--flow-c-infrastructure);
+  }
+
+  .border-flow[data-flow-2="interface"] {
+    --flow-2: var(--flow-c-interface);
+  }
+
+  .border-flow[data-flow-2="application"] {
+    --flow-2: var(--flow-c-application);
+  }
+
+  .border-flow[data-flow-2="data"] {
+    --flow-2: var(--flow-c-data);
+  }
+
+  .border-flow[data-flow-2="infrastructure"] {
+    --flow-2: var(--flow-c-infrastructure);
+  }
+
+  .border-flow[data-flow-3="interface"] {
+    --flow-3: var(--flow-c-interface);
+  }
+
+  .border-flow[data-flow-3="application"] {
+    --flow-3: var(--flow-c-application);
+  }
+
+  .border-flow[data-flow-3="data"] {
+    --flow-3: var(--flow-c-data);
+  }
+
+  .border-flow[data-flow-3="infrastructure"] {
+    --flow-3: var(--flow-c-infrastructure);
+  }
+
+  .border-flow[data-flow-4="interface"] {
+    --flow-4: var(--flow-c-interface);
+  }
+
+  .border-flow[data-flow-4="application"] {
+    --flow-4: var(--flow-c-application);
+  }
+
+  .border-flow[data-flow-4="data"] {
+    --flow-4: var(--flow-c-data);
+  }
+
+  .border-flow[data-flow-4="infrastructure"] {
+    --flow-4: var(--flow-c-infrastructure);
+  }
+
+  .border-flow-ring {
+    @apply pointer-events-none absolute -inset-px overflow-hidden p-0.5 opacity-60 transition-opacity duration-300 dark:opacity-100;
+    border-radius: inherit;
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: xor;
+
+    &::before,
+    &::after {
+      @apply absolute -inset-full;
+      content: "";
+      background: conic-gradient(
+        from 0deg,
+        transparent 0deg,
+        var(--flow-1) 70deg,
+        var(--flow-2) 130deg,
+        var(--flow-3) 190deg,
+        var(--flow-4) 250deg,
+        transparent 320deg
+      );
+    }
+
+    /* the fast sweep only shows on hover and focus */
+    &::after {
+      @apply opacity-0 transition-opacity duration-300;
+    }
+  }
+
+  .border-flow:is(:hover, :focus-within) > .border-flow-ring {
+    @apply opacity-100;
+
+    &::before {
+      @apply opacity-0;
+    }
+
+    &::after {
+      @apply opacity-100;
+    }
+  }
+
+  .border-flow > .border-flow-ring::before {
+    @apply transition-opacity duration-300;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .border-flow-ring::before {
+      animation: border-flow-spin 8s linear infinite;
+    }
+
+    /* the fast sweep waits (paused) until the card is hovered or focused */
+    .border-flow-ring::after {
+      animation: border-flow-spin 3s linear infinite paused;
+    }
+
+    .border-flow:is(:hover, :focus-within) > .border-flow-ring::after {
+      animation-play-state: running;
+    }
+
+    /* paused by ScrollEffects while the card is off screen */
+    .border-flow[data-offscreen] > .border-flow-ring::before,
+    .border-flow[data-offscreen] > .border-flow-ring::after {
+      animation-play-state: paused;
+    }
+  }
+
+  /* Reduced motion: nothing moves, the border is a still gradient arc;
+     hover and focus only brighten it (and the fast sweep never shows) */
+  @media (prefers-reduced-motion: reduce) {
+    .border-flow:is(:hover, :focus-within) > .border-flow-ring::before {
+      @apply opacity-100;
+    }
+
+    .border-flow:is(:hover, :focus-within) > .border-flow-ring::after {
+      @apply opacity-0;
+    }
+  }
+
   /* ---- Page structure ---- */
   .container-page {
     @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8;
@@ -106,7 +401,7 @@
 
   /* Combine with .section on every second section */
   .section-alt {
-    @apply bg-neutral-50 dark:bg-neutral-800/50;
+    @apply bg-neutral-50/50 dark:bg-neutral-800/50;
   }
 
   /* Border colour for rules and outlines; combine with border, border-t, etc. */
@@ -146,10 +441,15 @@
 
   /* ---- Buttons and badges ---- */
   .btn {
-    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-md px-4 py-2 font-display text-sm font-semibold transition-colors duration-200 sm:px-5 sm:py-2.5 sm:text-base;
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-md border border-transparent px-4 py-2 font-display text-sm font-semibold transition duration-200 motion-safe:hover:-translate-y-0.5 motion-safe:active:translate-y-0 motion-safe:active:scale-98 sm:px-5 sm:py-2.5 sm:text-base;
   }
 
   /* Square icon-only button (theme toggle, menu button). Defined after .btn */
+  /* Smaller button, for the header; defined after .btn so it wins at every breakpoint */
+  .btn-sm {
+    @apply px-3 py-1.5 text-sm sm:px-3.5 sm:py-1.5 sm:text-sm;
+  }
+
   .btn-icon {
     @apply size-10 p-0;
   }
@@ -163,7 +463,7 @@
   }
 
   .badge {
-    @apply inline-flex items-center rounded-md bg-neutral-100 px-2 py-0.5 font-display text-sm font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300;
+    @apply inline-flex items-center gap-1.5 rounded-md bg-neutral-100 px-2 py-0.5 font-display text-sm font-medium text-neutral-700 transition duration-200 motion-safe:hover:-translate-y-0.5 dark:bg-neutral-800 dark:text-neutral-300;
   }
 
   /* Inside a data-layer (or with data-layer on the badge itself) */
@@ -174,9 +474,23 @@
   }
 
   /* ---- Stack section ---- */
+  /* The coloured left rule is a pseudo-element so it can draw downward (scaleY) */
   .layer-band {
-    @apply border-t border-l-4 border-t-neutral-200 py-8 pl-4 sm:py-10 sm:pl-6 dark:border-t-neutral-700;
-    border-left-color: var(--layer-fg);
+    @apply relative border-t border-t-neutral-200 py-8 pl-5 sm:py-10 sm:pl-7 dark:border-t-neutral-700;
+
+    &::before {
+      @apply absolute inset-y-0 left-0 w-1 origin-top;
+      content: "";
+      background-color: var(--layer-fg);
+    }
+  }
+
+  /* Badges in a band appear one after another (delay set per position below) */
+  .band-tags > li {
+    transition-property: opacity, transform;
+    transition-duration: 400ms;
+    transition-timing-function: ease-out;
+    transition-delay: calc(350ms + var(--tag, 0) * 40ms);
   }
 
   /* Layer colour helpers for tags, SVG parts and timeline tech lists */
@@ -199,34 +513,447 @@
     stroke: var(--layer-fg);
   }
 
+  /* Thin line from a diagram layer towards the page edge (decorative) */
+  .layer-line {
+    @apply pointer-events-none absolute top-1/2 left-full h-px w-screen origin-left;
+    background-color: var(--layer-fg);
+    --load-start: 500ms;
+  }
+
+  /* ---- Stack diagram: interaction and request trace ---- */
+  /* A layer of the diagram is a button; hovering or focusing it dims the others */
+  .diagram-layer {
+    @apply relative block w-full cursor-pointer rounded-lg text-left transition-opacity duration-200;
+  }
+
+  .stack-trace:has(.diagram-layer:is(:hover, :focus-visible))
+    .diagram-layer:not(:is(:hover, :focus-visible)) {
+    opacity: 0.45;
+  }
+
+  /* The wrapper is a size container so the trace can travel in container-width units:
+     a layer is 18cqw tall (400 x 72 viewBox) and layers are 0.75rem apart */
+  .stack-trace {
+    @apply relative;
+    container-type: inline-size;
+    --trace-duration: 10s;
+    --trace-delay: 900ms;
+    --trace-interface: var(--color-sky-700);
+    --trace-application: var(--color-emerald-700);
+    --trace-data: var(--color-amber-700);
+    --trace-infrastructure: var(--color-fuchsia-700);
+    @variant dark {
+      --trace-interface: var(--color-sky-300);
+      --trace-application: var(--color-emerald-300);
+      --trace-data: var(--color-amber-300);
+      --trace-infrastructure: var(--color-fuchsia-300);
+    }
+  }
+
+  /* Hidden until motion is allowed: with reduced motion there is no trace at all */
+  .trace-dot {
+    @apply pointer-events-none absolute hidden size-2 rounded-full;
+    top: calc(9cqw - 0.25rem);
+    left: 97.5cqw;
+    margin-left: -0.25rem;
+    background-color: var(--trace-color, var(--trace-interface));
+    box-shadow: 0 0 0.5rem 0.125rem
+      color-mix(in oklab, var(--trace-color, var(--trace-interface)) 55%, transparent);
+  }
+
+  /* Overlay that brightens a layer while the dot passes (opacity only) */
+  .layer-pulse {
+    @apply pointer-events-none absolute inset-0 rounded-lg opacity-0;
+    background-color: var(--layer-fg);
+  }
+
+  /* Selecting a layer (diagram or legend) */
+  .layer-toggle {
+    @apply cursor-pointer rounded-md bg-white/60 px-2 py-1 font-display text-sm font-medium transition-colors duration-200 dark:bg-neutral-900/40;
+    color: var(--layer-fg);
+
+    &:hover,
+    &[aria-pressed="true"] {
+      background-color: var(--layer-tint);
+    }
+
+    &[aria-pressed="true"] {
+      outline: 1px solid var(--layer-fg);
+    }
+  }
+
+  /* ---- Placeholders until real assets exist ---- */
+  /* Project screenshot: a simple browser window with the project name and layer stripes */
+  .window-bar {
+    @apply flex items-center gap-1.5 border-b bg-neutral-100 px-3 py-2 dark:bg-neutral-800;
+  }
+
+  .window-dot {
+    @apply size-2 rounded-full bg-neutral-300 dark:bg-neutral-600;
+  }
+
+  .window-body {
+    @apply flex aspect-video flex-col justify-between bg-neutral-50 p-4 sm:p-6 dark:bg-neutral-800/50;
+  }
+
+  .placeholder-title {
+    @apply font-display text-2xl leading-tight font-extrabold tracking-tight font-stretch-expanded sm:text-3xl;
+  }
+
+  /* About photo: initials in a square with the four layer colours as a thin border,
+     one colour per side, in layer order (top, right, bottom, left) */
+  .layer-frame {
+    @apply border-2 border-solid bg-neutral-50 dark:bg-neutral-800/50;
+    border-color: var(--frame-interface) var(--frame-application) var(--frame-data)
+      var(--frame-infrastructure);
+    --frame-interface: var(--color-sky-700);
+    --frame-application: var(--color-emerald-700);
+    --frame-data: var(--color-amber-700);
+    --frame-infrastructure: var(--color-fuchsia-700);
+    @variant dark {
+      --frame-interface: var(--color-sky-300);
+      --frame-application: var(--color-emerald-300);
+      --frame-data: var(--color-amber-300);
+      --frame-infrastructure: var(--color-fuchsia-300);
+    }
+  }
+
+  /* ---- Project items: hover and focus feedback ---- */
+  /* The frame clips the screenshot, which zooms a little inside it */
+  .shot {
+    @apply overflow-hidden rounded-lg border transition-colors duration-200;
+  }
+
+  .shot-inner {
+    @apply transition-transform duration-300 ease-out;
+  }
+
+  .project-feature {
+    @apply transition-colors duration-200;
+  }
+
+  .project-item:is(:hover, :focus-within) .shot,
+  .project-feature:is(:hover, :focus-within) {
+    border-color: var(--main-fg);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .project-item:is(:hover, :focus-within) .shot-inner {
+      transform: scale(1.04);
+    }
+  }
+
+  /* A short bar sweeps across the link in the project's main layer colour */
+  .link-sweep {
+    &::after {
+      @apply absolute inset-x-0 bottom-1 h-0.5 origin-left transition-transform duration-300 ease-out;
+      content: "";
+      background-color: var(--main-fg, var(--color-sky-700));
+      transform: scaleX(0);
+    }
+
+    &:is(:hover, :focus-visible)::after {
+      transform: scaleX(1);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      &::after {
+        transform: scaleX(1);
+        opacity: 0;
+      }
+    }
+  }
+
+  .project-item:is(:hover, :focus-within) .link-sweep::after {
+    transform: scaleX(1);
+  }
+
+  /* ---- Icon and label swaps (theme toggle, copy email) ---- */
+  /* Two stacked children: the first shows in state "a", the second in state "b".
+     The one leaving turns and shrinks while the other turns in. */
+  .icon-swap {
+    @apply relative block;
+
+    & > * {
+      @apply absolute inset-0 size-full;
+    }
+
+    &[data-icon="a"] > :nth-child(2) {
+      @apply scale-50 rotate-90 opacity-0;
+    }
+
+    &[data-icon="b"] > :nth-child(1) {
+      @apply scale-50 -rotate-90 opacity-0;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      & > * {
+        transition-property: opacity, rotate, scale;
+        transition-duration: 250ms;
+        transition-timing-function: ease-out;
+      }
+    }
+  }
+
+  .label-swap {
+    @apply col-start-1 row-start-1;
+
+    &[data-active="false"] {
+      @apply translate-y-1 opacity-0;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      transition-property: opacity, translate;
+      transition-duration: 200ms;
+      transition-timing-function: ease-out;
+    }
+  }
+
+  /* ---- Contact stack ---- */
+  /* Rows of the Contact panel, one per channel. The layer comes from data-layer on the <li>.
+     The 4px edge widens and the row takes the layer tint on hover and focus. */
+  .contact-stack > li + li {
+    @apply border-t border-neutral-200 dark:border-neutral-700;
+  }
+
+  .contact-row {
+    @apply relative flex items-center gap-4 py-5 pr-5 pl-7 transition-colors duration-200;
+
+    &::before {
+      @apply absolute inset-y-0 left-0 w-1 transition-[width] duration-200;
+      content: "";
+      background-color: var(--layer-fg);
+    }
+
+    &:is(a:hover, a:focus-visible, :focus-within, :hover) {
+      background-color: var(--layer-tint);
+    }
+
+    &:is(a:hover, a:focus-visible, :focus-within, :hover)::before {
+      @apply w-2;
+    }
+  }
+
+  .contact-icon {
+    @apply flex size-10 shrink-0 items-center justify-center rounded-md transition-transform duration-200;
+    background-color: var(--layer-tint);
+    color: var(--layer-fg);
+  }
+
+  .contact-row:is(a:hover, a:focus-visible, :focus-within, :hover) .contact-icon {
+    @apply motion-safe:-translate-y-0.5;
+  }
+
+  /* The email row has two buttons. They sit under the address unless the panel is wide
+     enough (container query), so the address never wraps mid-word. */
+  .contact-row-email {
+    @apply flex-wrap @2xl:flex-nowrap;
+  }
+
+  .contact-actions {
+    @apply flex w-full flex-wrap items-center gap-2 @2xl:ml-auto @2xl:w-auto @2xl:shrink-0;
+  }
+
   /* ---- Links ---- */
   /* inline-block + py-1 lifts the hit area to at least 24px tall */
   .link {
-    @apply inline-block py-1 font-display font-medium text-sky-700 underline underline-offset-4 transition-colors duration-200 hover:text-sky-800 dark:text-sky-300 dark:hover:text-sky-200;
+    @apply relative inline-block py-1 font-display font-medium text-sky-700 underline underline-offset-4 transition-colors duration-200 hover:text-sky-800 dark:text-sky-300 dark:hover:text-sky-200;
   }
 
   /* ---- Navigation ---- */
   .nav-link {
-    @apply inline-block py-1 font-display text-sm font-medium text-neutral-600 underline decoration-transparent decoration-2 underline-offset-8 transition-colors duration-200 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100;
+    @apply relative inline-block py-1 font-display text-sm font-medium text-neutral-600 transition-colors duration-200 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100;
 
     &[data-active="true"] {
-      @apply text-neutral-900 decoration-sky-700 dark:text-neutral-100 dark:decoration-sky-300;
+      @apply text-neutral-900 dark:text-neutral-100;
     }
   }
 
-  /* Floats over the page, so it gets a shadow */
-  .nav-mobile-menu {
-    @apply absolute inset-x-0 top-full flex flex-col gap-4 border-b border-neutral-200 bg-white px-4 py-4 shadow-md sm:px-6 md:hidden dark:border-neutral-700 dark:bg-neutral-900;
+  /* One shared element: Motion slides it from the previous active link to the new one.
+     The colour comes from the SectionMark inside it. */
+  .nav-underline {
+    @apply absolute inset-x-0 -bottom-0.5 block;
+  }
+
+  /* ---- Header: the "Stack bar" ---- */
+  /* Sticky and always solid (.glass-strong, nearly opaque), with a plain bottom border instead
+     of the glass border and shadow. It does not hide on scroll and never changes size. */
+  .site-header {
+    @apply sticky top-0 z-40 border-x-0 border-t-0 border-b border-neutral-200 shadow-none backdrop-blur-xl dark:border-neutral-700;
+  }
+
+  .header-brand {
+    @apply inline-flex items-center gap-3;
+  }
+
+  .header-name {
+    @apply font-display text-lg font-medium font-stretch-semi-expanded;
+  }
+
+  /* The 4px strip on the header's top edge: four equal segments in the layer colours.
+     Each is dim; the segment(s) of the section in view brighten and a full-strength fill
+     grows through them as you scroll through that section (LayerStrip sets --p, 0 to 1). */
+  .layer-strip {
+    @apply flex h-1;
+    --fill: 0;
+
+    & > span {
+      @apply relative flex-1 overflow-hidden;
+    }
+
+    & > span::before,
+    & > span::after {
+      @apply absolute inset-0;
+      content: "";
+      background-color: var(--layer-fg);
+    }
+
+    & > span::before {
+      @apply opacity-30 transition-opacity duration-300;
+    }
+
+    & > span::after {
+      @apply origin-left;
+      transform: scaleX(var(--fill, 0));
+    }
+
+    & > span[data-lit]::before {
+      @apply opacity-60;
+    }
+
+    /* one lit segment: its fill is the section's progress */
+    & > span[data-lit] {
+      --fill: var(--p, 0);
+    }
+
+    /* Stack lights all four: the fill runs across the whole strip, a quarter per segment */
+    &[data-all] > span[data-lit] {
+      --fill: clamp(0, calc(var(--p, 0) * 4 - var(--i, 0)), 1);
+    }
+
+    & > span:nth-child(2) {
+      --i: 1;
+    }
+
+    & > span:nth-child(3) {
+      --i: 2;
+    }
+
+    & > span:nth-child(4) {
+      --i: 3;
+    }
+  }
+
+  /* Reduced motion: no scroll-linked fill; the lit segments simply show at full strength */
+  @media (prefers-reduced-motion: reduce) {
+    .layer-strip > span[data-lit]::before {
+      @apply opacity-100;
+    }
+
+    .layer-strip > span::after {
+      @apply hidden;
+    }
+  }
+
+  /* ---- Mobile menu ---- */
+  .mobile-menu {
+    @apply fixed inset-0 z-30 flex flex-col justify-between overflow-y-auto rounded-none border-0 px-6 pt-24 pb-8 shadow-none md:hidden;
+  }
+
+  html.menu-open {
+    @apply overflow-hidden;
+  }
+
+  .menu-link {
+    @apply flex items-center gap-4 py-1;
+
+    &[aria-current="location"] {
+      @apply text-sky-700 dark:text-sky-300;
+    }
   }
 
   /* ---- Experience timeline ---- */
-  .timeline-item {
-    @apply relative border-l border-neutral-200 pb-10 pl-6 last:pb-0 dark:border-neutral-700;
+  /* The list draws one grey track and a sky progress line over it. ScrollEffects sets
+     --timeline-progress (0 to 1) and marks items as reached as the line passes their dot.
+     Without JavaScript or with reduced motion the line is complete and every dot is filled. */
+  .timeline {
+    @apply relative;
 
-    &::before {
-      @apply absolute top-2 -left-1.75 size-3 rounded-full bg-sky-700 dark:bg-sky-300;
+    /* Both lines run from the centre of the first dot (top-3.5 = 0.875rem) to the bottom of the
+       list, which ends with the last education entry. */
+    &::before,
+    &::after {
+      @apply absolute top-3.5 bottom-0 left-0 w-0.5 -translate-x-1/2;
       content: "";
     }
+
+    &::before {
+      @apply bg-neutral-200;
+    }
+
+    &::after {
+      @apply origin-top bg-sky-700;
+      transform: scaleY(var(--timeline-progress, 1));
+    }
+
+    /* Dark colours for pseudo-elements: a dark: utility or @variant dark would put the dark
+       condition after ::before, which is invalid CSS, so the condition goes on the ancestor */
+    :where(.dark, .dark *) &::before {
+      @apply bg-neutral-700;
+    }
+
+    :where(.dark, .dark *) &::after {
+      @apply bg-sky-300;
+    }
+  }
+
+  .timeline-item {
+    @apply relative pb-10 pl-6 last:pb-0;
+
+    &::before {
+      @apply absolute top-2 -left-1.5 size-3 rounded-full border-2 border-sky-700 bg-sky-700 transition-colors duration-300;
+      content: "";
+    }
+
+    :where(.dark, .dark *) &::before {
+      @apply border-sky-300 bg-sky-300;
+    }
+  }
+
+  /* "Education" label inside the same list, so the line runs on past the jobs */
+  .timeline-label {
+    @apply pb-4 pl-6;
+  }
+
+  /* Study entries: a glass card, a square dot level with the card's title, tighter spacing */
+  .timeline-item-study {
+    @apply pb-4 last:pb-0;
+
+    &::before {
+      @apply top-5 rounded-sm;
+    }
+  }
+
+  /* The line draws as you scroll and the dots fill when its tip reaches them. This only applies
+     when scripting is on and motion is allowed, so without JavaScript, or with reduced motion,
+     the line is fully drawn and every dot is filled. Until ScrollEffects has run, the line is
+     empty (not full) so there is no flash of a complete line that then retracts. */
+  @media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+    .timeline::after {
+      transform: scaleY(var(--timeline-progress, 0));
+    }
+
+    .timeline .timeline-item:not([data-reached])::before {
+      @apply bg-neutral-50;
+    }
+
+    :where(.dark, .dark *) .timeline .timeline-item:not([data-reached])::before {
+      @apply bg-neutral-900;
+    }
+  }
+
+  .layer-fill {
+    background-color: var(--layer-fg);
   }
 
   /* ---- Case-study write-ups ---- */
@@ -272,5 +999,518 @@
 }
 
 /* ==========================================================================
-   5. Utilities
+   5. Load animations (hero)
+
+   Each animation only names where it STARTS (`from`). The element's normal
+   styles are the end state, so the page is complete without JavaScript and
+   with reduced motion, where no animation runs at all. Nothing is hidden
+   first and revealed after hydration, so there is no flash.
+   ========================================================================== */
+/* Background fields: each drifts on its own 40-60s loop, transform only */
+@keyframes glass-drift-1 {
+  to {
+    transform: translate(4rem, 3rem);
+  }
+}
+
+@keyframes glass-drift-2 {
+  to {
+    transform: translate(-3rem, 4rem);
+  }
+}
+
+@keyframes glass-drift-3 {
+  to {
+    transform: translate(3rem, -3rem);
+  }
+}
+
+@keyframes glass-drift-4 {
+  to {
+    transform: translate(-4rem, -2rem);
+  }
+}
+
+@keyframes border-flow-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes drop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.75rem);
+  }
+}
+
+@keyframes draw-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* The hero name goes from the condensed to the expanded end of Archivo's width axis */
+@keyframes expand-width {
+  from {
+    font-stretch: 62%;
+  }
+}
+
+/* The request trace: the dot hops down through the layers and back up (10s loop).
+   Layers sit at 0, 16.67, 33.33 and 50% of the loop on the way down, then again on the way up. */
+@keyframes trace-appear {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes trace-move {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  16.67%,
+  83.33% {
+    transform: translateY(calc(18cqw + 0.75rem));
+  }
+
+  33.33%,
+  66.67% {
+    transform: translateY(calc(2 * (18cqw + 0.75rem)));
+  }
+
+  50% {
+    transform: translateY(calc(3 * (18cqw + 0.75rem)));
+  }
+}
+
+/* The dot takes the colour of the layer it is in; the switch happens between layers */
+@keyframes trace-color {
+  0%,
+  7.5%,
+  92.5%,
+  100% {
+    --trace-color: var(--trace-interface);
+  }
+
+  9.2%,
+  24.2%,
+  75.8%,
+  90.8% {
+    --trace-color: var(--trace-application);
+  }
+
+  25.8%,
+  40.8%,
+  59.2%,
+  74.2% {
+    --trace-color: var(--trace-data);
+  }
+
+  42.5%,
+  57.5% {
+    --trace-color: var(--trace-infrastructure);
+  }
+}
+
+@keyframes trace-pulse-1 {
+  0%,
+  100% {
+    opacity: 0.14;
+  }
+
+  5%,
+  95% {
+    opacity: 0;
+  }
+}
+
+@keyframes trace-pulse-2 {
+  0%,
+  11.67%,
+  21.67%,
+  78.33%,
+  88.33%,
+  100% {
+    opacity: 0;
+  }
+
+  16.67%,
+  83.33% {
+    opacity: 0.14;
+  }
+}
+
+@keyframes trace-pulse-3 {
+  0%,
+  28.33%,
+  38.33%,
+  61.67%,
+  71.67%,
+  100% {
+    opacity: 0;
+  }
+
+  33.33%,
+  66.67% {
+    opacity: 0.14;
+  }
+}
+
+@keyframes trace-pulse-4 {
+  0%,
+  45%,
+  55%,
+  100% {
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 0.14;
+  }
+}
+
+/* Layer highlight: dim the tags of the other layers (set by LayerHighlightProvider) */
+@layer components {
+  [data-highlight="interface"] {
+    & .badge:not([data-layer="interface"], [data-layer="interface"] *) {
+      opacity: 0.3;
+    }
+
+    & :is(.badge[data-layer="interface"], [data-layer="interface"] .badge) {
+      outline: 1px solid var(--layer-fg);
+    }
+
+    & .diagram-layer:not([data-layer="interface"]) {
+      opacity: 0.45;
+    }
+  }
+
+  [data-highlight="application"] {
+    & .badge:not([data-layer="application"], [data-layer="application"] *) {
+      opacity: 0.3;
+    }
+
+    & :is(.badge[data-layer="application"], [data-layer="application"] .badge) {
+      outline: 1px solid var(--layer-fg);
+    }
+
+    & .diagram-layer:not([data-layer="application"]) {
+      opacity: 0.45;
+    }
+  }
+
+  [data-highlight="data"] {
+    & .badge:not([data-layer="data"], [data-layer="data"] *) {
+      opacity: 0.3;
+    }
+
+    & :is(.badge[data-layer="data"], [data-layer="data"] .badge) {
+      outline: 1px solid var(--layer-fg);
+    }
+
+    & .diagram-layer:not([data-layer="data"]) {
+      opacity: 0.45;
+    }
+  }
+
+  [data-highlight="infrastructure"] {
+    & .badge:not([data-layer="infrastructure"], [data-layer="infrastructure"] *) {
+      opacity: 0.3;
+    }
+
+    & :is(.badge[data-layer="infrastructure"], [data-layer="infrastructure"] .badge) {
+      outline: 1px solid var(--layer-fg);
+    }
+
+    & .diagram-layer:not([data-layer="infrastructure"]) {
+      opacity: 0.45;
+    }
+  }
+}
+
+/* Scroll reveals. ScrollEffects marks elements that start below the fold with
+   data-reveal-state="hidden" after hydration and switches them to "shown" once, when they
+   enter the viewport. Without JavaScript nothing is ever hidden. Reduced motion: no reveals. */
+@layer components {
+  /* Position of a badge inside a band, for the stagger */
+  .band-tags > li:nth-child(1) {
+    --tag: 0;
+  }
+  .band-tags > li:nth-child(2) {
+    --tag: 1;
+  }
+  .band-tags > li:nth-child(3) {
+    --tag: 2;
+  }
+  .band-tags > li:nth-child(4) {
+    --tag: 3;
+  }
+  .band-tags > li:nth-child(5) {
+    --tag: 4;
+  }
+  .band-tags > li:nth-child(6) {
+    --tag: 5;
+  }
+  .band-tags > li:nth-child(7) {
+    --tag: 6;
+  }
+  .band-tags > li:nth-child(8) {
+    --tag: 7;
+  }
+  .band-tags > li:nth-child(9) {
+    --tag: 8;
+  }
+  .band-tags > li:nth-child(10) {
+    --tag: 9;
+  }
+  .band-tags > li:nth-child(11) {
+    --tag: 10;
+  }
+  .band-tags > li:nth-child(12) {
+    --tag: 11;
+  }
+  .band-tags > li:nth-child(13) {
+    --tag: 12;
+  }
+  .band-tags > li:nth-child(14) {
+    --tag: 13;
+  }
+  .band-tags > li:nth-child(15) {
+    --tag: 14;
+  }
+
+  .layout-cards > li:nth-child(even) {
+    --reveal-delay: 120ms;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    [data-reveal] {
+      transition-property: opacity, transform;
+      transition-duration: 600ms;
+      transition-timing-function: ease-out;
+      transition-delay: var(--reveal-delay, 0ms);
+    }
+
+    /* Stack bands: the rule draws first, then the text, then the badges */
+    .layer-band::before {
+      transition: transform 600ms ease-out;
+    }
+
+    .band-text {
+      transition-property: opacity, transform;
+      transition-duration: 500ms;
+      transition-timing-function: ease-out;
+      transition-delay: 200ms;
+    }
+
+    [data-reveal-state="hidden"]:not([data-reveal="rule"]) {
+      opacity: 0;
+    }
+
+    [data-reveal="fade"][data-reveal-state="hidden"] {
+      transform: translateY(0.75rem);
+    }
+
+    [data-reveal="slide-left"][data-reveal-state="hidden"] {
+      transform: translateX(-2rem);
+    }
+
+    [data-reveal="rule"][data-reveal-state="hidden"] {
+      &::before {
+        transform: scaleY(0);
+      }
+
+      & .band-text {
+        opacity: 0;
+        transform: translateY(0.5rem);
+      }
+
+      & .band-tags > li {
+        opacity: 0;
+        transform: translateY(0.375rem);
+      }
+    }
+  }
+}
+
+@layer components {
+  /* Step N starts N x 100ms after step 0; used to stack the diagram layers top to bottom */
+  .load-step-0 {
+    --load-step: 0;
+  }
+  .load-step-1 {
+    --load-step: 1;
+  }
+  .load-step-2 {
+    --load-step: 2;
+  }
+  .load-step-3 {
+    --load-step: 3;
+  }
+  .load-step-4 {
+    --load-step: 4;
+  }
+  .load-step-5 {
+    --load-step: 5;
+  }
+
+  /* Position of a letter within its word (the name is split into words and letters) */
+  .name-letter:nth-child(1) {
+    --letter: 0;
+  }
+  .name-letter:nth-child(2) {
+    --letter: 1;
+  }
+  .name-letter:nth-child(3) {
+    --letter: 2;
+  }
+  .name-letter:nth-child(4) {
+    --letter: 3;
+  }
+  .name-letter:nth-child(5) {
+    --letter: 4;
+  }
+  .name-letter:nth-child(6) {
+    --letter: 5;
+  }
+  .name-letter:nth-child(7) {
+    --letter: 6;
+  }
+  .name-letter:nth-child(8) {
+    --letter: 7;
+  }
+  .name-letter:nth-child(9) {
+    --letter: 8;
+  }
+  .name-letter:nth-child(10) {
+    --letter: 9;
+  }
+  .name-letter:nth-child(11) {
+    --letter: 10;
+  }
+  .name-letter:nth-child(12) {
+    --letter: 11;
+  }
+  .name-letter:nth-child(13) {
+    --letter: 12;
+  }
+  .name-letter:nth-child(14) {
+    --letter: 13;
+  }
+  .name-letter:nth-child(15) {
+    --letter: 14;
+  }
+  .name-letter:nth-child(16) {
+    --letter: 15;
+  }
+  .name-letter:nth-child(17) {
+    --letter: 16;
+  }
+  .name-letter:nth-child(18) {
+    --letter: 17;
+  }
+  .name-letter:nth-child(19) {
+    --letter: 18;
+  }
+  .name-letter:nth-child(20) {
+    --letter: 19;
+  }
+  .name-letter:nth-child(21) {
+    --letter: 20;
+  }
+  .name-letter:nth-child(22) {
+    --letter: 21;
+  }
+  .name-letter:nth-child(23) {
+    --letter: 22;
+  }
+  .name-letter:nth-child(24) {
+    --letter: 23;
+  }
+
+  .name-word:nth-child(2) {
+    --word: 1;
+  }
+
+  .name-word:nth-child(3) {
+    --word: 2;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .load-drop {
+      animation: drop-in 400ms ease-out backwards;
+      animation-delay: calc(var(--load-step, 0) * 100ms);
+    }
+
+    .load-draw {
+      animation: draw-x 800ms ease-out backwards;
+      animation-delay: calc(var(--load-start, 0ms) + var(--load-step, 0) * 100ms);
+    }
+
+    .trace-dot {
+      display: block;
+      animation:
+        trace-appear 400ms ease-out var(--trace-delay) backwards,
+        trace-move var(--trace-duration) ease-in-out var(--trace-delay) infinite backwards,
+        trace-color var(--trace-duration) linear var(--trace-delay) infinite backwards;
+    }
+
+    .layer-pulse {
+      animation-duration: var(--trace-duration);
+      animation-delay: var(--trace-delay);
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+    }
+
+    .trace-pulse-1 {
+      animation-name: trace-pulse-1;
+    }
+
+    .trace-pulse-2 {
+      animation-name: trace-pulse-2;
+    }
+
+    .trace-pulse-3 {
+      animation-name: trace-pulse-3;
+    }
+
+    .trace-pulse-4 {
+      animation-name: trace-pulse-4;
+    }
+
+    /* Paused by TraceController while the tab is hidden or the diagram is off screen */
+    [data-trace="paused"] :is(.trace-dot, .layer-pulse) {
+      animation-play-state: paused;
+    }
+
+    .name-letter {
+      animation: expand-width 560ms ease-out backwards;
+      animation-delay: calc((var(--word, 0) * 6 + var(--letter, 0)) * 30ms);
+    }
+  }
+}
+
+/* ==========================================================================
+   View transitions (project title and screenshot morph into the case-study page)
+   Names come from ProjectTransition. With reduced motion nothing animates.
+   ========================================================================== */
+::view-transition-group(.morph) {
+  animation-duration: 450ms;
+  animation-timing-function: ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-image-pair(*) {
+    animation: none !important;
+  }
+}
+
+/* ==========================================================================
+   6. Utilities
    ========================================================================== */

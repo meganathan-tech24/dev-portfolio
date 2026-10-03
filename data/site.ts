@@ -12,11 +12,11 @@ export const site = {
     "TODO: add a short paragraph on how I like to work",
   ],
   photo: {
-    // TODO: add a plain portrait to /public/images, then set src, width and height
-    src: "TODO: /images/portrait.jpg",
-    alt: "Portrait of Meganathan Palanisamy",
-    width: 800,
-    height: 1000,
+    src: "/images/Meganathan_Image.png",
+    alt: "Meganathan Palanisamy",
+    // intrinsic size of the file, so next/image can reserve the space
+    width: 413,
+    height: 472,
   },
 
   // TODO: confirm a city-level location to show publicly (see the resume)
@@ -28,7 +28,7 @@ export const site = {
   },
   links: {
     email: "meganathankpm220@gmail.com",
-    linkedin: "https://www.linkedin.com/in/meganathantech-2k",
+    linkedin: "https://www.linkedin.com/in/meganathan-tech-2k",
     // TODO: GitHub profile URL (not in the resume)
     github: "TODO: GitHub profile URL",
     // TODO: public/resume.pdf still contains phone and address. Replace it
@@ -37,12 +37,19 @@ export const site = {
   },
   // TODO: production URL once there is a domain
   siteUrl: "TODO: production URL",
+  contactIntro: "I'm open to full-stack roles. Email is the quickest way to reach me.",
+  builtWith: [
+    { name: "Next.js", icon: "nextjs" },
+    { name: "Tailwind CSS", icon: "tailwind" },
+    // simple-icons has no Motion logo, so this one shows a lucide icon
+    { name: "Motion", icon: "motion" },
+  ],
   nav: [
-    { label: "Stack", id: "stack" },
-    { label: "Projects", id: "projects" },
-    { label: "Experience", id: "experience" },
-    { label: "About", id: "about" },
-    { label: "Contact", id: "contact" },
+    { label: "Stack", id: "stack", mark: "all" },
+    { label: "Projects", id: "projects", mark: "interface" },
+    { label: "Experience", id: "experience", mark: "application" },
+    { label: "About", id: "about", mark: "data" },
+    { label: "Contact", id: "contact", mark: "infrastructure" },
   ],
   seo: {
     title: "Meganathan Palanisamy, full-stack developer",

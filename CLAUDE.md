@@ -1,4 +1,3 @@
-
 # Dev Portfolio
 
 ## Goal
@@ -16,11 +15,13 @@ Fast, accessible, easy to update, and clearly made by a person, not a template.
 | `typescript` | 7.0.x | strict mode (see version notes) |
 | `tailwindcss`, `@tailwindcss/postcss` | 4.3.x | CSS-first config with `@theme` |
 | `motion` | 14.x | animations; import from `motion/react` (not `framer-motion`) |
-| `lucide-react` | 1.x | UI icons |
+| `lucide-react` | 1.x | UI icons (no brand logos) |
+| `simple-icons` | 16.x | brand/tech logos as SVG path data (no React wrapper) |
 | `next-themes` | 0.4.x | light/dark mode |
 | `clsx`, `tailwind-merge` | 2.x, 3.x | `cn()` helper in `lib/utils.ts` |
 | `eslint`, `eslint-config-next` | 10.x, 16.3.x | linting |
 | `prettier`, `prettier-plugin-tailwindcss` | 3.x, 0.8.x | formatting + class sorting |
+| `eslint-config-prettier` | 10.x | turns off ESLint rules that clash with Prettier |
 | `@playwright/test`, `@axe-core/playwright` | 1.63.x, 4.13.x | smoke + accessibility tests |
 | `@lhci/cli` | 0.15.x | Lighthouse CI |
 
@@ -58,6 +59,16 @@ Fast, accessible, easy to update, and clearly made by a person, not a template.
   /sections             # Hero, About, Stack, Projects, Experience, Contact
   /ui                   # Button, Badge, SectionHeading, Reveal, ThemeToggle
   StackDiagram.tsx      # the signature visual (see Design)
+  CircuitTraces.tsx     # PCB-style traces from the diagram layers (hero)
+  /icons
+    TechIcon.tsx        # renders a simple-icons logo or a lucide fallback
+    LinkedInIcon.tsx    # small local SVG (not in simple-icons)
+  GlassBackground.tsx   # fixed background behind the glass surfaces
+  LayerMark.tsx         # small logo: "MP" with four layer-colour bars (navbar, footer, favicon)
+  /layout
+    Navbar.tsx
+    MobileMenu.tsx
+    Footer.tsx
 /data
   types.ts              # shared types for all data files
   site.ts               # name, role, links, availability, SEO defaults
@@ -70,7 +81,11 @@ Fast, accessible, easy to update, and clearly made by a person, not a template.
   smoke.spec.ts         # Playwright + axe
 /public
   resume.pdf            # web-safe resume (no phone, no address)
-  images, favicon
+  /images
+    Meganathan_Image.png  # my photo for the About section
+  favicon
+.prettierrc.json
+.prettierignore
 /.github/workflows
   ci.yml                # lint, type check, build, Playwright, Lighthouse CI
 ```
@@ -137,16 +152,17 @@ Stack section) and everything else stays quiet, readable and well-typeset.
 The goal is a site that looks designed for me, not like a generated template.
 
 ### Avoid (these make a portfolio look AI-generated)
-- Blurred gradient blobs, glowing orbs, rainbow or spectrum gradients
-- Glassmorphism cards (translucent + backdrop blur) everywhere
+- Rainbow or spectrum gradients, neon glowing orbs, busy moving blob shows
+  (the glass background below is allowed, but it stays soft and slow)
+- Glass so transparent that text loses contrast
 - Typewriter or rotating role text, floating tech icons, logo marquees
+  (small tech icons inside badges are fine)
 - Animated stat counters ("5+ years · 20+ projects")
 - Gradient-ring avatar in the hero
-- Every section fading and sliding up as you scroll; hover glow/tilt on every card
+- The same fade-and-slide-up on every element; random hover glow or 3D tilt
 - One highlighted gradient word in each headline
 - Uppercase tracked-out eyebrow labels above every heading
 - `01 / 02 / 03` numbering on content that is not a sequence
-- Identical rounded cards with the same shadow for every kind of content
 - Middle-dot meta strings (`React · Node · AWS`) and `→` on every link
 - Cream background + serif + terracotta, or black + one neon accent
 
@@ -168,7 +184,8 @@ layer appears (diagram, Stack section, project tags, timeline tech lists).
 - Tints for small backgrounds: `<colour>-50` in light, `<colour>-400/10` in dark
 - Text colours above all pass WCAG AA on their backgrounds; never use 400/500
   shades for text in light mode
-- No gradients except inside the stack diagram, if at all
+- Gradients only in the stack diagram, the `.border-flow` card borders and the
+  soft glass background; never on text or buttons
 
 ### Typography
 - Display: **Archivo** (variable, load the `wdth` axis). Use it for the name,
@@ -192,33 +209,268 @@ layer appears (diagram, Stack section, project tags, timeline tech lists).
   real technologies. No photo in the hero
 - Stack: the same four layers as wide horizontal bands, top to bottom, each with
   a short plain sentence about what I do in that layer and its technologies as
-  badges. Not a grid of logos
+  badges. Each band heading has a lucide icon for the layer (Interface:
+  `Monitor`, Application: `Server`, Data: `Database`, Infrastructure: `Cloud`),
+  and each technology badge shows its logo before the name (see "Icons").
+  Not a grid of logos
 - Projects: the featured project is a large two-column block (screenshot +
   write-up). Other projects are a simple list or 2-column grid with screenshot,
   title, one-line summary, layer-coloured tags, and links to the case study,
   live site and code. Real screenshots only; `TODO` frame if missing
 - Experience: a vertical timeline (this is a real sequence, so dates and order
-  matter). Company name as text; no logos unless I provide them
-- About: photo (plain, `rounded-lg`, no decorative frame) next to a short bio
-- Contact: a clear heading, my email large and selectable with a copy button,
-  then LinkedIn, GitHub and Resume. No cards, no glow
+  matter). Company name as text; no logos unless I provide them. Use the full
+  width from `lg`: a sticky left column with role, company, dates, location and
+  tech badges, and the bullets on the right. Show at most 4 bullets per job,
+  with a "Show all" toggle for the rest
+- Education: its own sub-section after the jobs, not plain text. Each entry is
+  a glass card with a `GraduationCap` icon, degree and field as the title,
+  institution, dates and location, plus any grade, coursework, final-year
+  project or certifications that are in the resume (nothing invented; skip
+  what is not there). If there is more than one entry, show them on the same
+  timeline line as the jobs with a different dot shape (square) so study and
+  work read as one story. Certifications from the resume get small badges
+- About: my photo from `/public/images/Meganathan_Image.png` with `next/image`
+  (width/height set, lazy-loaded, alt text "Meganathan Palanisamy"),
+  `rounded-lg`, with the animated layer border (see "Card borders") next to a
+  short bio. Path comes from `site.ts` (`photo`), not hardcoded
+- Contact: the one place on the page that asks the visitor to act, so it is
+  the boldest section after the hero. Two columns from `lg`, stacked on mobile
+  - Left column: heading "Get in touch" (`type-h2`), one plain sentence from
+    `site.ts` (for example "I'm open to full-stack roles. Email is the
+    quickest way to reach me."), and the availability line with a small
+    pulsing dot in emerald. No invented promises such as reply times unless I
+    add them to `site.ts`
+  - Right column: a "contact stack" built like the stack diagram, one glass
+    panel with `.border-flow` holding four full-width rows, one per channel,
+    each tied to a layer colour, top to bottom:
+    1. Email (sky): `Mail` icon, label "Email", my address in large Archivo,
+       and two actions on the right: "Copy email" (`Copy` morphs to `Check`,
+       "Copied" announced) and "Send email" (`mailto:`)
+    2. LinkedIn (emerald): `LinkedInIcon`, label, profile handle, opens in a
+       new tab
+    3. GitHub (amber): simple-icons GitHub logo, label, username, new tab.
+       If `site.ts` has no GitHub URL yet, show the row with a `TODO` note in
+       development only and hide it in production
+    4. Resume (fuchsia): `FileDown` icon, label "Resume", "PDF" as the value,
+       downloads `/resume.pdf`
+  - Each row is a single link/button area with a 4px left edge in its layer
+    colour; on hover/focus the row gets its layer tint background, the icon
+    lifts slightly and the edge widens. Rows are separated by thin rules
+  - On mobile the email row stacks its actions under the address so the
+    address never wraps mid-word
+- Contact and footer must not repeat each other: the footer has no big email,
+  no "Looking for..." line and no copy button
+- Header (navbar): "Stack bar"
+  - Always a solid surface, never transparent over content: `.glass-strong`
+    tuned to be nearly opaque (light `bg-white/90`, dark `bg-neutral-900/90`,
+    `backdrop-blur-xl`) with a `neutral-200` / `neutral-700` bottom border.
+    Sticky at the top, full width, content inside `.container-page`
+  - Top edge: a 4px strip split into four equal segments in the layer colours,
+    left to right Interface (sky), Application (emerald), Data (amber),
+    Infrastructure (fuchsia). This strip replaces the separate scroll-progress
+    bar:
+    - Each segment is dim (about 30% opacity) by default
+    - The segment for the section in view lights up to full strength:
+      Stack = all four, Projects = Interface, Experience = Application,
+      About = Data, Contact = Infrastructure
+    - Inside the lit segment, a fill grows left to right as you scroll through
+      that section (`scaleX`), so the strip is also the progress indicator
+  - Left: `LayerMark` (four short stacked bars in the layer colours) and my
+    first name "Meganathan" in Archivo, medium weight, slightly expanded width.
+    Show the full name from `lg`. Clicking it scrolls to the top. Keep clear
+    spacing between the mark and the name (no overlap or squashing)
+  - Right: section links (Stack, Projects, Experience, About, Contact) with
+    the active link in `neutral-900` / `neutral-100` and a 2px underline in
+    that section's colour (same mapping as the strip), sliding between links
+    with `layoutId`; then the theme toggle as a bordered square icon button
+  - No Resume button and no availability pill in the header. The Resume
+    download stays in the Contact section and the footer
+  - Height about 64px; it does not hide on scroll and does not change size
+  - Theme toggle: render a same-size placeholder until mounted, then the sun
+    or moon icon; it must never show as an empty box
+  - Mobile (below `md`): mark + name on the left, theme toggle and a menu
+    button (`Menu` / `X` icons) on the right; the strip stays on top.
+    Menu opens a full-screen `.glass-strong` panel with large links
+    (`type-h2`), each with its layer colour marker, appearing in a short
+    stagger; below them icon buttons for email, LinkedIn and GitHub. Focus is
+    trapped while open, Escape and a link click close it, body scroll is locked
+- Footer: compact and quiet, because Contact directly above already does the
+  asking
+  - A thin four-colour line (the layer colours in order) at the top edge
+  - Main row, three columns from `md` (stacked on mobile):
+    - Brand: `LayerMark`, my name, my role from `site.ts` in one line, and
+      the availability line
+    - "Sections": the page links
+    - "Stack": the four layer names, each with its colour marker; clicking
+      one sets the site-wide layer highlight and scrolls to Stack
+  - Social icons row: email, LinkedIn, GitHub and Resume as small icon-only
+    buttons (with `aria-label`), no text labels
+  - Bottom row with a top rule: "© {year} Meganathan Palanisamy" (year
+    computed at build time on the server), "Built with Next.js, Tailwind CSS
+    and Motion" with small logos, and a "Back to top" button with an
+    `ArrowUp` icon
+  - Plain page background (no glass panel and no `.border-flow` in the
+    footer)
+  - Optional: my local time ("Chennai, IST") only if I confirm the city in
+    `site.ts` (`location`); render it client-side only. Leave it out until then
+  - All footer content comes from `site.ts`, `skills.ts` and the section list
+- The favicon and `apple-touch-icon` use `LayerMark`
 - Radii follow hierarchy: `rounded-md` for buttons and badges, `rounded-lg`
   for images and featured blocks, none for full-width bands
-- Shadows only where something floats (mobile menu, dropdown); otherwise use
-  borders and spacing
-- A background pattern is not needed; whitespace and rules do the structure
+- Shadows: soft `shadow-lg` / `shadow-xl` on glass surfaces only
 
-### Motion (one moment, plus feedback)
-- The signature moment: on first load, the stack diagram's layers draw/stack in
-  once, top to bottom (about 600ms total). That is the only automatic animation
-- Everything else is feedback to an action: theme toggle, mobile menu open/close,
-  "Copied" confirmation on the email button, hover/focus colour change on links
-  and buttons, active-section underline in the navbar
-- No scroll-reveal on every section, no scroll progress bar, no parallax, no tilt
-- Only animate `transform` and `opacity`; 150-300ms for feedback
-- Wrap the app in `<MotionConfig reducedMotion="user">`; with reduced motion
-  the diagram simply appears
-- Use `LazyMotion` + `m` components to keep the Motion bundle small
+### Background and glass (both themes)
+- `GlassBackground`: one fixed layer behind the whole page (`fixed inset-0
+  -z-10`) with four large, very soft colour fields in the layer colours
+  (sky, emerald, amber, fuchsia), heavily blurred (`blur-3xl`), at low opacity:
+  about 20-30% in light mode, about 15-20% in dark mode, over the page
+  background from the Colour table. They drift very slowly (30-60s loops, `transform` only) and
+  stop under reduced motion
+- Glass surfaces sit on top of it: navbar, cards (projects, education,
+  contact, About photo frame), the stack diagram and the mobile menu
+  - Light: `bg-white/60 backdrop-blur-xl border border-white/50 shadow-lg`
+  - Dark: `bg-neutral-900/50 backdrop-blur-xl border border-white/10 shadow-xl`
+  - Defined once as `.glass` and `.glass-strong` (navbar, mobile menu) in
+    `globals.css`
+- Text on glass must still pass WCAG AA: if a check fails, make the glass more
+  opaque rather than changing the text colour
+- Performance: no more than about 8 glass surfaces on screen at once; on
+  phones (base styles) use `backdrop-blur-md`, and `xl` blur from `md` up.
+  Use `@supports not (backdrop-filter: blur(1px))` to fall back to an opaque
+  background
+
+### Card borders (animated, theme-aware)
+- Featured project, project cards, education cards, the contact panel and the
+  About photo get a thin (1-2px) border with a colour sweep that travels
+  around the edge
+- Built once as `.border-flow` in `globals.css`: a pseudo-element with a
+  `conic-gradient` of the four layer colours, rotated with `transform:
+  rotate()` in a keyframe (compositor-friendly), masked so only the border
+  ring shows. No JavaScript
+- Theme: dark mode uses the 400 shades at full strength; light mode uses the
+  500 shades at lower opacity so it stays subtle on white
+- Speed: one slow loop (about 8s) at rest; on hover/focus the border
+  brightens and speeds up (about 3s). A project card may use only its own
+  layer colours
+- Pause the animation when the card is off screen if that is cheap (CSS
+  `animation-play-state` toggled by the existing IntersectionObserver);
+  under reduced motion show a static gradient border
+
+### Icons
+- UI icons: `lucide-react` (it has no brand logos)
+- Tech logos: `simple-icons`, imported by name (e.g. `siReact`) so only used
+  icons are bundled, rendered by `TechIcon` as an inline SVG using
+  `currentColor`, so logos take the layer colour instead of brand colours
+- `skills.ts` stores an `icon` key per technology; `TechIcon` maps it
+- Not in simple-icons (checked 2026-10-03): LinkedIn, Microsoft Azure,
+  OpenAI, Mux. Use lucide fallbacks for these (`Cloud` for Azure, `Sparkles`
+  for OpenAI, `Video` for Mux) and a small local `LinkedInIcon` SVG. For any
+  other missing logo, fall back to a lucide icon for its layer
+- Icon size follows the text (`size-4` in badges, `size-5` in buttons)
+
+### Motion (alive, but every animation is about layers or a user action)
+The site must feel interactive and alive. Every animation should show the
+"system of layers" idea or respond to what the visitor does, never be random
+decoration.
+
+Hero
+- Name: on load, the letters animate the Archivo width axis from condensed to
+  expanded with a slight stagger (one time, about 800ms)
+- Stack diagram: the four layers drop in and stack top to bottom on load
+- "Request trace": after the layers land, a small glowing dot travels down
+  through the layers (Interface to Infrastructure) and back up, slowly and
+  continuously, with each layer briefly brightening as the dot passes. It
+  pauses when the tab is hidden or the hero is off screen
+- Hovering or focusing a layer in the diagram highlights it and dims the others
+- Circuit traces (replaces the old straight lines): from the right edge of
+  each layer in the stack diagram, circuit-board style traces run towards the
+  page edge, like a PCB:
+  - Each layer has 2-3 traces in its own colour (sky, emerald, amber,
+    fuchsia). Traces run horizontally, bend only at 45 degrees, split and
+    re-join a little, and end at different lengths in a small ring "pad"
+    (an open circle). They never cross another layer's traces
+  - Built as one inline SVG component (`CircuitTraces.tsx`) next to
+    `StackDiagram`, positioned behind the hero content, `aria-hidden`.
+    Paths are hand-written in the component (no image file), using
+    `pathLength="1"` so lengths are easy to animate
+  - Load: after the layers drop in, each layer's traces draw outwards from the
+    diagram (stroke-dash animation from 0 to full, about 600-900ms, layer by
+    layer top to bottom), then the pads pop in (scale from 0)
+  - Idle: small bright "data pulses" (short dash segments) travel along the
+    traces from the diagram to the pads every few seconds, at slightly
+    different times per trace. When the request-trace dot passes a layer,
+    that layer's traces send a pulse at the same moment, so the hero reads as
+    one connected system
+  - Hover on a layer: its traces brighten and pulse faster; other layers'
+    traces dim (matches the diagram's hover)
+  - Glow: a soft glow (SVG `feGaussianBlur` filter, small radius) in dark
+    mode using the 300/400 shades; in light mode use the 600 shades with
+    almost no glow so it stays clean on white. Stroke width 1.5-2px, pads
+    about 8px
+  - Responsive: full traces from `lg`; on tablets keep one trace per layer;
+    below `md` (diagram stacked under the text) hide the traces
+  - Performance: no more than about 12 paths; pulses use CSS animation on
+    `stroke-dashoffset` of a duplicate path; pause when the hero is off
+    screen or the tab is hidden
+  - Reduced motion: traces and pads are drawn in their final state, no
+    pulses
+
+Layer highlight (site-wide interaction)
+- The layer legend ("Interface, Application, Data, Infrastructure") is
+  clickable. Selecting a layer highlights its tags everywhere on the page
+  (Stack, Projects, Experience) and dims the rest; click again to clear
+- Store the selected layer in a small client context, not in the URL
+
+Scrolling
+- Each section heading and its first block reveal once as they enter the
+  viewport. Vary the reveal by section instead of one identical fade-up:
+  - Stack: each band's coloured left rule draws downward (`scaleY`), then its
+    badges appear in a quick stagger
+  - Projects: the featured block's screenshot slides in from its side; grid
+    items appear in a short stagger
+  - Experience: the timeline line draws from top to bottom as you scroll
+    down (scroll-linked `scaleY` from 0 to 1 with `transform-origin: top`,
+    Tailwind `origin-top`). It starts at the first (newest) job and ends at
+    the last education entry, and must never grow upwards from the bottom or
+    from the middle. Map the scroll progress so the line's tip stays near the
+    middle of the viewport; each dot fills with colour when the tip passes it.
+    Scrolling back up shrinks the line again; the dots stay filled once reached
+- Scroll progress is shown by the header's four-segment layer strip (see Header)
+
+Interaction feedback
+- Navbar: the active-section underline slides between links in that
+  section's colour (shared layout animation with `layoutId`)
+- Buttons: slight lift and press (`translate-y`, `scale`) with a layer-coloured
+  focus ring
+- Badges: lift slightly on hover
+- Project items: screenshot zooms slightly inside its frame on hover, the
+  border takes the colour of the project's main layer, and the "Read case
+  study" link shows a short underline sweep
+- Copy email: the copy icon morphs into a check, "Copied" appears, then returns
+- Theme toggle: sun and moon rotate and cross-fade
+- Case-study pages: use the View Transitions support in the installed Next.js
+  / React version (if available) so the project title and screenshot morph
+  from the list into the case-study page; otherwise a simple fade
+
+Rules for motion
+- Use Motion (`motion/react`) with `LazyMotion` + `m` components
+- Animate `transform` and `opacity`. The exceptions are the hero name's
+  `font-variation-settings` (one time, one element), the request-trace glow
+  and the circuit traces' `stroke-dashoffset` (small SVG paths only).
+  The background drift and border sweep use `transform` only
+- Durations: 150-300ms for feedback, 400-800ms for reveals and load sequences
+- Reveals run once, never on every scroll back up
+- Wrap the app in `<MotionConfig reducedMotion="user">`. With reduced motion:
+  no request-trace loop, no scroll-linked effects, everything shows in its
+  final state, hover colour changes stay
+- Content must be visible without JavaScript (start from the visible state on
+  the server; only hide-then-reveal after hydration)
+
+### Placeholders until real assets exist
+- Missing project screenshots: render a designed fallback, not an empty grey
+  box. A simple browser-window frame with the project name set large and
+  thin stripes in the colours of the project's layers, plus a small
+  `TODO: screenshot` note for me
 
 ### Rules
 - No 3D, particles, canvas or large decorative images; SVG and CSS only
@@ -248,6 +500,9 @@ layer appears (diagram, Stack section, project tags, timeline tech lists).
   - `.btn`, `.btn-primary`, `.btn-secondary`, `.badge`
   - `.layer-band`: Stack section band
   - `.nav-link`, `.nav-mobile-menu`, `.timeline-item`, `.prose-case-study`
+  - `.glass`, `.glass-strong`, `.border-flow`, `.edu-card`
+- Keyframes for the background drift and border sweep are defined once as
+  `--animate-*` tokens in `@theme`
 - Layer colours are driven by a `data-layer="interface|application|data|infrastructure"`
   attribute with variants in `globals.css`, so components never repeat colour chains
 - Add a new global class whenever the same group of 3 or more utilities appears
@@ -338,12 +593,52 @@ layer appears (diagram, Stack section, project tags, timeline tech lists).
 - I make the commits. Claude does not commit; it suggests a commit message
   (`feat:`, `fix:`, `chore:`) at the end of each step
 
+## Formatting (Prettier)
+`.prettierrc.json`:
+```json
+{
+  "semi": true,
+  "singleQuote": false,
+  "trailingComma": "all",
+  "printWidth": 100,
+  "tabWidth": 2,
+  "useTabs": false,
+  "bracketSpacing": true,
+  "arrowParens": "always",
+  "endOfLine": "lf",
+  "plugins": ["prettier-plugin-tailwindcss"],
+  "tailwindStylesheet": "./app/globals.css",
+  "tailwindFunctions": ["cn", "clsx"]
+}
+```
+`.prettierignore`:
+```
+.next
+node_modules
+out
+coverage
+playwright-report
+test-results
+package-lock.json
+public
+docs
+```
+- `package.json` scripts: `"format": "prettier --write ."` and
+  `"format:check": "prettier --check ."`
+- Add `eslint-config-prettier` as the last entry in `eslint.config.mjs` so
+  ESLint and Prettier never fight
+- CI runs `npm run format:check`
+- Optional for VS Code: `.vscode/settings.json` with
+  `"editor.defaultFormatter": "esbenp.prettier-vscode"` and
+  `"editor.formatOnSave": true`
+
 ## Commands
 - `npm run dev`          start dev server
 - `npm run build`        production build
 - `npm run lint`         lint
 - `npx tsc --noEmit`     type check
-- `npm run format`       Prettier
+- `npm run format`       Prettier (write)
+- `npm run format:check` Prettier (check only, used in CI)
 - `npm run test:e2e`     Playwright smoke + accessibility tests
 
 ## Build order (phases and steps)
@@ -408,7 +703,8 @@ for me to say "next". Never start the next step on your own.
 ### Phase 7: Polish and quality
 - Step 7.1: Responsive check at 375px, 768px and 1280px in both themes; fix
   problems in the global classes, not in individual components
-- Step 7.2: Design review against the "Avoid" list; remove anything that crept in
+- Step 7.2: Design review against the "Avoid" list and the Motion section;
+  remove anything that crept in and add anything that is missing
 - Step 7.3: Accessibility pass (headings, focus, contrast, alt text, keyboard)
 - Step 7.4: Performance pass (images, client components, bundle size, Lighthouse 90+)
 - Step 7.5: Tests and CI: install `@playwright/test`, `@axe-core/playwright`
@@ -418,6 +714,43 @@ for me to say "next". Never start the next step on your own.
 - Step 7.6: Security headers, `npm outdated`, `npm audit`, final lint, type
   check and build
 
+### Phase 8: Visual upgrade
+- Step 8.1: Prettier setup from "Formatting (Prettier)": config files,
+  scripts, `eslint-config-prettier`; run `npm run format` once and report
+  which files changed
+- Step 8.2: `GlassBackground`, `.glass` and `.glass-strong`, applied to the
+  navbar, mobile menu, stack diagram and existing cards; check contrast in
+  both themes
+- Step 8.3: `.border-flow` animated borders on the featured project, project
+  cards and contact panel, with reduced-motion and off-screen handling
+- Step 8.4: About photo from `/public/images/Meganathan_Image.png` with the
+  animated border; add `photo` to `site.ts`; check the file size and tell me if
+  it is over 500 KB
+- Step 8.5: Icons: install `simple-icons`, build `TechIcon` and
+  `LinkedInIcon`, add `icon` keys to `skills.ts`, layer icons on Stack band
+  headings and logos in all tech badges (Stack, Projects, Experience)
+- Step 8.6: Education redesign (glass cards, timeline integration,
+  certifications); list anything in the resume that I should add or that is
+  missing
+- Step 8.7: Contact icons and glass panel
+- Step 8.8: Header redesign ("Stack bar"): solid header, four-segment layer
+  strip with active-section highlight and per-section progress (remove the old
+  separate scroll-progress bar), `LayerMark` + name, coloured sliding
+  underline, fixed theme toggle icon, no Resume button, new mobile menu with
+  focus trap
+- Step 8.9: Contact and footer redesign: Contact becomes the two-column
+  "contact stack" (email, LinkedIn, GitHub, Resume rows); the footer becomes
+  compact (brand, sections, stack shortcuts, icon links, build-time year,
+  "Back to top") and loses the duplicate email call-to-action; favicon from
+  `LayerMark`
+- Step 8.10: Hero circuit traces: replace the straight lines with
+  `CircuitTraces` (draw-in, pads, data pulses synced with the request trace,
+  hover, responsive and reduced-motion rules)
+- Step 8.11: Full check: both themes at 375px, 768px and 1280px, reduced
+  motion, keyboard (including the mobile menu), axe, Lighthouse (mobile
+  Performance 90+; if the glass or borders push it lower, tell me which one
+  and suggest a lighter setting)
+
 ## Definition of done (for each task)
 - Works on mobile and desktop, in light and dark mode
 - No console errors or TypeScript errors
@@ -425,6 +758,7 @@ for me to say "next". Never start the next step on your own.
 - Content comes from `/data`
 - Accessible by keyboard; contrast passes AA
 - Nothing from the "Avoid" list
+- `npm run format:check` passes
 - Styling uses Tailwind's default theme and the global classes: no arbitrary
   values, no hex codes, no repeated responsive utility chains
 

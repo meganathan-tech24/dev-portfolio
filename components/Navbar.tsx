@@ -1,13 +1,18 @@
 "use client";
 
+import { Menu, X } from "lucide-react";
 import { AnimatePresence } from "motion/react";
 import * as m from "motion/react-m";
-import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { site } from "@/data/site";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { LayerStrip } from "@/components/LayerStrip";
+import { MobileMenu } from "@/components/MobileMenu";
+import { LayerMark } from "@/components/ui/LayerMark";
+import { SectionMark } from "@/components/ui/SectionMark";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { site } from "@/data/site";
+import type { NavItem as NavItemData } from "@/data/types";
 
 const sectionIds = site.nav.map((item) => item.id);
 
@@ -22,9 +27,7 @@ function useActiveSection(enabled: boolean) {
       (entries) => {
         for (const entry of entries) {
           const id = entry.target.id;
-          setActive((current) =>
-            entry.isIntersecting ? id : current === id ? null : current,
-          );
+          setActive((current) => (entry.isIntersecting ? id : current === id ? null : current));
         }
       },
       // A section counts as active while it crosses a band near the top third
@@ -36,14 +39,14 @@ function useActiveSection(enabled: boolean) {
       if (element) observer.observe(element);
     }
 
-    // The last section is short, so it may never reach the band above: treat
-    // "footer fully visible" (scrolled to the bottom) as the last section
+    // The last section is short, so it may never reach the band above: once the footer has
+    // come up into the lower part of the screen, treat the last section as the active one
     const footer = document.querySelector("footer");
     const bottomObserver = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) setActive(sectionIds[sectionIds.length - 1]);
       },
-      { threshold: 1 },
+      { rootMargin: "0px 0px -30% 0px" },
     );
     if (footer) bottomObserver.observe(footer);
 
@@ -56,100 +59,116 @@ function useActiveSection(enabled: boolean) {
   return enabled ? active : null;
 }
 
+type NavItemProps = {
+  item: NavItemData;
+  active: boolean;
+};
+
+function NavItem({ item, active }: NavItemProps) {
+  return (
+    <Link
+      href={`/#${item.id}`}
+      className="nav-link"
+      data-active={active}
+      aria-current={active ? "location" : undefined}
+    >
+      {item.label}
+      {active ? (
+        // One shared element slides from link to link; it wears the section's colour
+        <m.span
+          layoutId="nav-underline"
+          aria-hidden="true"
+          className="nav-underline"
+          transition={{ duration: 0.25, ease: "easeOut" }}
+        >
+          <SectionMark mark={item.mark} direction="horizontal" />
+        </m.span>
+      ) : null}
+    </Link>
+  );
+}
+
 export function Navbar() {
   const pathname = usePathname();
   const active = useActiveSection(pathname === "/");
   const [menuOpen, setMenuOpen] = useState(false);
-  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  // "Meganathan" on its own below lg, the full name from lg
+  const [firstName, ...otherNames] = site.name.split(" ");
 
-  useEffect(() => {
-    if (!menuOpen) return;
+  const closeMenu = useCallback((restoreFocus: boolean) => {
+    setMenuOpen(false);
+    if (restoreFocus) menuButton.current?.focus();
+  }, []);
 
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setMenuOpen(false);
-        menuButtonRef.current?.focus();
-      }
-    }
-
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [menuOpen]);
+  // Clicking the name scrolls to the top when already on the home page
+  const onBrandClick = (event: React.MouseEvent) => {
+    if (pathname !== "/") return;
+    event.preventDefault();
+    // back to the top also means no section in the address bar any more
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    // "auto" follows the page's scroll-behavior: smooth only when motion is allowed
+    window.scrollTo({ top: 0, behavior: "auto" });
+  };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900">
-      <a
-        href="#main"
-        className="btn btn-primary sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50"
-      >
-        Skip to content
-      </a>
+    <>
+      <header className="site-header glass-strong">
+        <a
+          href="#main"
+          className="btn btn-primary sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50"
+        >
+          Skip to content
+        </a>
 
-      <div className="container-page flex h-16 items-center justify-between gap-4">
-        <Link href="/" className="font-display text-lg font-bold">
-          {site.name}
-        </Link>
+        <LayerStrip activeId={active} />
 
-        <nav aria-label="Main" className="hidden items-center gap-6 md:flex">
-          {site.nav.map((item) => (
-            <Link
-              key={item.id}
-              href={`/#${item.id}`}
-              className="nav-link"
-              data-active={active === item.id}
-              aria-current={active === item.id ? "location" : undefined}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <button
-            ref={menuButtonRef}
-            type="button"
-            className="btn btn-secondary btn-icon md:hidden"
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
-            aria-expanded={menuOpen}
-            aria-controls="mobile-menu"
-            onClick={() => setMenuOpen((open) => !open)}
+        <div className="container-page flex h-15 items-center justify-between gap-4">
+          <Link
+            href="/"
+            className="header-brand"
+            aria-label={`${site.name}, back to the top`}
+            onClick={onBrandClick}
           >
-            {menuOpen ? (
-              <X aria-hidden="true" className="size-5" />
-            ) : (
-              <Menu aria-hidden="true" className="size-5" />
-            )}
-          </button>
+            <LayerMark showInitials={false} />
+            <span className="header-name">
+              {firstName}
+              <span className="hidden lg:inline"> {otherNames.join(" ")}</span>
+            </span>
+          </Link>
+
+          <div className="flex items-center gap-6">
+            <nav aria-label="Main" className="hidden items-center gap-6 md:flex">
+              {site.nav.map((item) => (
+                <NavItem key={item.id} item={item} active={active === item.id} />
+              ))}
+            </nav>
+
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <button
+                ref={menuButton}
+                type="button"
+                className="btn btn-secondary btn-icon md:hidden"
+                aria-label={menuOpen ? "Close menu" : "Open menu"}
+                aria-expanded={menuOpen}
+                aria-controls="mobile-menu"
+                onClick={() => setMenuOpen((open) => !open)}
+              >
+                {menuOpen ? (
+                  <X aria-hidden="true" className="size-5" />
+                ) : (
+                  <Menu aria-hidden="true" className="size-5" />
+                )}
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      </header>
 
       <AnimatePresence>
-        {menuOpen ? (
-          <m.nav
-            id="mobile-menu"
-            aria-label="Main mobile"
-            className="nav-mobile-menu"
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-          >
-            {site.nav.map((item) => (
-              <Link
-                key={item.id}
-                href={`/#${item.id}`}
-                className="nav-link"
-                data-active={active === item.id}
-                aria-current={active === item.id ? "location" : undefined}
-                onClick={() => setMenuOpen(false)}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </m.nav>
-        ) : null}
+        {menuOpen ? <MobileMenu active={active} onClose={closeMenu} /> : null}
       </AnimatePresence>
-    </header>
+    </>
   );
 }

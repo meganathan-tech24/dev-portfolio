@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProjectScreenshot } from "@/components/ProjectScreenshot";
-import { Badge } from "@/components/ui/Badge";
+import { ProjectTransition } from "@/components/ProjectTransition";
+import { TechBadge } from "@/components/ui/TechBadge";
 import { Button } from "@/components/ui/Button";
 import { projects } from "@/data/projects";
 import { site } from "@/data/site";
@@ -18,9 +19,7 @@ export async function generateMetadata({
   params,
 }: PageProps<"/projects/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const project: Project | undefined = projects.find(
-    (item) => item.slug === slug,
-  );
+  const project: Project | undefined = projects.find((item) => item.slug === slug);
   if (!project) return {};
 
   return {
@@ -40,13 +39,9 @@ export async function generateMetadata({
   };
 }
 
-export default async function ProjectPage({
-  params,
-}: PageProps<"/projects/[slug]">) {
+export default async function ProjectPage({ params }: PageProps<"/projects/[slug]">) {
   const { slug } = await params;
-  const project: Project | undefined = projects.find(
-    (item) => item.slug === slug,
-  );
+  const project: Project | undefined = projects.find((item) => item.slug === slug);
   if (!project) notFound();
 
   const { links, screenshots } = project;
@@ -65,17 +60,21 @@ export default async function ProjectPage({
         </Link>
 
         <header className="mt-8">
-          <h1 className="type-h2">{project.title}</h1>
+          <ProjectTransition slug={project.slug} part="title">
+            <h1 className="type-h2">{project.title}</h1>
+          </ProjectTransition>
           <p className="type-small mt-2">{project.company}</p>
           <p className="type-body mt-4">{project.summary}</p>
         </header>
 
         <div className="mt-10 grid gap-6">
-          <ProjectScreenshot
-            project={project}
-            sizes="(min-width: 1152px) 1088px, 100vw"
-            priority
-          />
+          <ProjectTransition slug={project.slug} part="shot">
+            <ProjectScreenshot
+              project={project}
+              sizes="(min-width: 1152px) 1088px, 100vw"
+              priority
+            />
+          </ProjectTransition>
           {screenshots.slice(1).map((_, i) => (
             <ProjectScreenshot
               key={i}
@@ -108,7 +107,7 @@ export default async function ProjectPage({
                 <ul className="mt-2 flex list-none flex-wrap gap-2 pl-0">
                   {group.tech.map((tech) => (
                     <li key={tech.name}>
-                      <Badge>{tech.name}</Badge>
+                      <TechBadge name={tech.name} layer={group.layer} />
                     </li>
                   ))}
                 </ul>
@@ -125,9 +124,7 @@ export default async function ProjectPage({
 
         {links.live || links.code ? (
           <div className="mt-10 flex flex-wrap gap-3">
-            {links.live ? (
-              <Button href={links.live}>Visit live site</Button>
-            ) : null}
+            {links.live ? <Button href={links.live}>Visit live site</Button> : null}
             {links.code ? (
               <Button href={links.code} variant="secondary">
                 View code

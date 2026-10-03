@@ -126,10 +126,9 @@ export const projects = [
     screenshots: [],
   },
   {
-    slug: "footprints-cdm",
+    slug: "footprints-cdp",
     title: "Footprints CDP",
-    summary:
-      "A retail analytics and customer data platform for shopping malls and retailers.",
+    summary: "A retail analytics and customer data platform for shopping malls and retailers.",
     featured: false,
     company: "App Innovation Technologies",
     problem:

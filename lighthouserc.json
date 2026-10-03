@@ -3,10 +3,7 @@
     "collect": {
       "startServerCommand": "npm run start -- --port 3100",
       "startServerReadyPattern": "Ready",
-      "url": [
-        "http://localhost:3100/",
-        "http://localhost:3100/projects/coheart"
-      ],
+      "url": ["http://localhost:3100/", "http://localhost:3100/projects/coheart"],
       "numberOfRuns": 3,
       "settings": { "chromeFlags": "--no-sandbox" }
     },

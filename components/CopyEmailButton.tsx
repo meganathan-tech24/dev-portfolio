@@ -18,7 +18,9 @@ const ANNOUNCEMENTS: Record<Status, string> = {
   failed: "Could not copy. Select the address and copy it manually.",
 };
 
-export function CopyEmailButton({ email }: { email: string }) {
+const STATUSES = Object.keys(LABELS) as Status[];
+
+export function CopyEmailButton({ email, className }: { email: string; className?: string }) {
   const [status, setStatus] = useState<Status>("idle");
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -35,13 +37,27 @@ export function CopyEmailButton({ email }: { email: string }) {
     timer.current = setTimeout(() => setStatus("idle"), 2000);
   }
 
-  const Icon = status === "copied" ? Check : Copy;
-
   return (
     <>
-      <Button variant="secondary" onClick={copy}>
-        <Icon aria-hidden="true" className="size-4" />
-        {LABELS[status]}
+      <Button variant="secondary" className={className} onClick={copy}>
+        {/* The copy icon turns into a check and back */}
+        <span className="icon-swap size-5" data-icon={status === "copied" ? "b" : "a"}>
+          <Copy aria-hidden="true" />
+          <Check aria-hidden="true" />
+        </span>
+        {/* All labels share one grid cell, so the button keeps one width while the text swaps */}
+        <span className="grid">
+          {STATUSES.map((name) => (
+            <span
+              key={name}
+              className="label-swap"
+              data-active={status === name}
+              aria-hidden={status !== name}
+            >
+              {LABELS[name]}
+            </span>
+          ))}
+        </span>
       </Button>
       <span role="status" aria-live="polite" className="sr-only">
         {ANNOUNCEMENTS[status]}

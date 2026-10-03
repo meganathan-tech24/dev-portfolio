@@ -1,32 +1,25 @@
-"use client";
-
-import { useReducedMotion } from "motion/react";
-import * as m from "motion/react-m";
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
+
+const MAX_STEP = 5;
+
+/** Global class that delays an animation by `step` x 100ms (see globals.css) */
+export function loadStep(step: number) {
+  return `load-step-${Math.min(Math.max(step, 0), MAX_STEP)}`;
+}
 
 type RevealProps = {
   children: ReactNode;
-  /** Seconds to wait before this element animates in */
-  delay?: number;
+  /** Position in a sequence: step N starts N x 100ms after step 0 */
+  step?: number;
   className?: string;
 };
 
 /**
- * Fade and rise on first load. Reserved for the stack diagram layers:
- * it is the only automatic animation on the site, not a scroll effect.
- * With reduced motion the content simply appears.
+ * Drops in from above once on first load. Reserved for the stack diagram
+ * layers. It is plain CSS (`.load-drop`), so the content is in the page and
+ * visible without JavaScript, and with reduced motion nothing animates.
  */
-export function Reveal({ children, delay = 0, className }: RevealProps) {
-  const reduceMotion = useReducedMotion();
-
-  return (
-    <m.div
-      className={className}
-      initial={reduceMotion ? false : { opacity: 0, y: -12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay, ease: "easeOut" }}
-    >
-      {children}
-    </m.div>
-  );
+export function Reveal({ children, step = 0, className }: RevealProps) {
+  return <div className={cn("load-drop", loadStep(step), className)}>{children}</div>;
 }

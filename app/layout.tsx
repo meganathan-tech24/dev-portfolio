@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Archivo, JetBrains_Mono, Source_Serif_4 } from "next/font/google";
 import { Footer } from "@/components/Footer";
+import { GlassBackground } from "@/components/GlassBackground";
+import { ScrollEffects } from "@/components/ScrollEffects";
 import { Navbar } from "@/components/Navbar";
 import { Providers } from "@/components/Providers";
 import { site } from "@/data/site";
@@ -51,6 +53,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      data-scroll-behavior="smooth"
       className={`${archivo.variable} ${sourceSerif.variable} ${jetbrainsMono.variable}`}
       suppressHydrationWarning
     >
@@ -65,6 +68,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           }}
         />
         <Providers>
+          <GlassBackground />
+          <ScrollEffects />
           <Navbar />
           {children}
           <Footer />

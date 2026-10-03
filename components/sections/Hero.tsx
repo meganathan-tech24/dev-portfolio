@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { StackDiagram } from "@/components/StackDiagram";
 import { Button } from "@/components/ui/Button";
 import { site } from "@/data/site";
@@ -11,19 +12,28 @@ export function Hero() {
   ].filter((social) => !isTodo(social.href));
 
   return (
-    <section aria-labelledby="hero-heading" className="section">
+    <section aria-labelledby="hero-heading" className="section overflow-x-clip">
       <div className="container-page grid items-center gap-12 lg:grid-cols-5 lg:gap-8">
         <div className="lg:col-span-3">
-          <h1 id="hero-heading" className="type-hero">
-            {site.name}
+          {/* Split into words and letters so the width axis can animate letter by letter.
+              Each word is its own line, so the animation never changes the height. */}
+          <h1 id="hero-heading" className="type-hero" aria-label={site.name}>
+            {site.name.split(" ").map((word, wordIndex) => (
+              <Fragment key={`${word}-${wordIndex}`}>
+                {wordIndex > 0 ? " " : null}
+                <span className="name-word block" aria-hidden="true">
+                  {[...word].map((letter, letterIndex) => (
+                    <span key={letterIndex} className="name-letter">
+                      {letter}
+                    </span>
+                  ))}
+                </span>
+              </Fragment>
+            ))}
           </h1>
-          <p className="type-h3 mt-4 text-neutral-600 dark:text-neutral-400">
-            {site.role}
-          </p>
+          <p className="type-h3 mt-4 text-neutral-600 dark:text-neutral-400">{site.role}</p>
           <p className="type-body mt-6">{site.tagline}</p>
-          {availability.open ? (
-            <p className="type-small mt-4">{availability.text}</p>
-          ) : null}
+          {availability.open ? <p className="type-small mt-4">{availability.text}</p> : null}
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Button href="#projects">See my work</Button>
@@ -36,12 +46,7 @@ export function Hero() {
             <ul className="mt-8 flex gap-6">
               {socials.map((social) => (
                 <li key={social.label}>
-                  <a
-                    href={social.href}
-                    className="link"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <a href={social.href} className="link" target="_blank" rel="noopener noreferrer">
                     {social.label}
                   </a>
                 </li>

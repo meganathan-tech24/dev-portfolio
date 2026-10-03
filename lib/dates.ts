@@ -1,28 +1,29 @@
 // Deterministic date formatting. Intl and toLocale* depend on the runtime
 // locale and can cause hydration mismatches, so month names are fixed here.
 
-const MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** Value of `end` for a job I still have */
+export const PRESENT = "present";
+
+/**
+ * Turns "present" into the current month ("YYYY-MM"). Used while the site is built, in
+ * Server Components only, so the result is fixed in the HTML and cannot cause a hydration mismatch.
+ */
+export function resolveMonth(value: string) {
+  if (value !== PRESENT) return value;
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
 
 function parseMonth(value: string) {
-  const [year, month] = value.split("-").map(Number);
+  const [year, month] = resolveMonth(value).split("-").map(Number);
   return { year, month };
 }
 
-/** "2025-04" becomes "Apr 2025" */
+/** "2025-04" becomes "Apr 2025"; "present" becomes "Present" */
 export function formatMonth(value: string) {
+  if (value === PRESENT) return "Present";
   const { year, month } = parseMonth(value);
   return `${MONTHS[month - 1]} ${year}`;
 }
@@ -50,7 +51,7 @@ export function formatDuration(start: string, end: string) {
 export function yearsOfExperience(jobs: { start: string; end: string }[]) {
   const earliest = jobs.map((job) => job.start).sort()[0];
   const latest = jobs
-    .map((job) => job.end)
+    .map((job) => resolveMonth(job.end))
     .sort()
     .reverse()[0];
   const from = parseMonth(earliest);

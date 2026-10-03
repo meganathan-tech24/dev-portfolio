@@ -7,9 +7,7 @@ export const experience = [
     role: "Full Stack Developer",
     location: "Swindon, UK (Remote)",
     start: "2025-04",
-    // TODO: confirm. The resume says "Sep 2026" but also describes the role in
-    // the present tense. If it is current, the timeline should show "Present".
-    end: "2026-09",
+    end: "present",
     highlights: [
       "Architect and build Coheart, a multi-tenant, cohort-based learning management system, with React and TypeScript on the front end and Node.js, Express and Prisma on the back end.",
       "Designed the multi-tenant PostgreSQL data model and the tenant-isolation pattern that lets several organisations share one infrastructure.",
@@ -67,10 +65,13 @@ export const experience = [
 /** Newest first */
 export const education = [
   {
-    qualification: "Bachelor of Science, Computer Science",
-    institution: "Gobi Arts and Science College, Gobichettipalayam",
+    qualification: "Bachelor of Science (BS), Computer Science",
+    institution: "Gobi Arts and Science College",
+    location: "Gobichettipalayam",
     start: "2018",
     end: "2021",
+    // TODO: the resume gives no grade, coursework, final-year project or certifications.
+    // Add any of them here (grade, coursework, project, certifications) and the card shows them.
   },
   {
     qualification: "HSC, Computer Science",

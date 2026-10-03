@@ -9,31 +9,16 @@ type ButtonProps = {
   className?: string;
   children: ReactNode;
 } & (
-  | ({ href: string } & Omit<
-      ComponentPropsWithoutRef<"a">,
-      "href" | "className"
-    >)
-  | ({ href?: undefined } & Omit<
-      ComponentPropsWithoutRef<"button">,
-      "className"
-    >)
+  | ({ href: string } & Omit<ComponentPropsWithoutRef<"a">, "href" | "className">)
+  | ({ href?: undefined } & Omit<ComponentPropsWithoutRef<"button">, "className">)
 );
 
 function isExternal(href: string) {
   return /^https?:\/\//.test(href);
 }
 
-export function Button({
-  variant = "primary",
-  className,
-  children,
-  ...props
-}: ButtonProps) {
-  const classes = cn(
-    "btn",
-    variant === "primary" ? "btn-primary" : "btn-secondary",
-    className,
-  );
+export function Button({ variant = "primary", className, children, ...props }: ButtonProps) {
+  const classes = cn("btn", variant === "primary" ? "btn-primary" : "btn-secondary", className);
 
   if (props.href === undefined) {
     const { type = "button", ...rest } = props;
@@ -48,20 +33,14 @@ export function Button({
 
   if (isExternal(href)) {
     return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={classes}
-        {...rest}
-      >
+      <a href={href} target="_blank" rel="noopener noreferrer" className={classes} {...rest}>
         {children}
       </a>
     );
   }
 
   // Internal routes use next/link; hash links, mailto: and downloads stay plain anchors
-  if (href.startsWith("/")) {
+  if (href.startsWith("/") && !rest.download) {
     return (
       <Link href={href} className={classes} {...rest}>
         {children}

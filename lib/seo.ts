@@ -15,9 +15,7 @@ export function canonical(path: string): Metadata["alternates"] {
 /** schema.org Person for the whole site; TODO values are left out */
 export function personJsonLd() {
   const url = getSiteUrl();
-  const sameAs = [site.links.linkedin, site.links.github].filter(
-    (link) => !isTodo(link),
-  );
+  const sameAs = [site.links.linkedin, site.links.github].filter((link) => !isTodo(link));
 
   return {
     "@context": "https://schema.org",

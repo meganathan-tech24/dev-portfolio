@@ -19,14 +19,12 @@ export function SectionHeading({
   className,
 }: SectionHeadingProps) {
   return (
-    <div className={cn("mb-10 sm:mb-12", className)}>
+    <div data-reveal="fade" className={cn("mb-10 sm:mb-12", className)}>
       <h2 id={id} className="type-h2">
         {children}
       </h2>
       {description ? (
-        <p className="type-body mt-4 text-neutral-600 dark:text-neutral-400">
-          {description}
-        </p>
+        <p className="type-body mt-4 text-neutral-600 dark:text-neutral-400">{description}</p>
       ) : null}
       {aside}
     </div>

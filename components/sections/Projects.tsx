@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { ProjectScreenshot } from "@/components/ProjectScreenshot";
-import { Badge } from "@/components/ui/Badge";
+import { ProjectTransition } from "@/components/ProjectTransition";
+import { TechBadge } from "@/components/ui/TechBadge";
 import { Button } from "@/components/ui/Button";
 import { LayerLegend } from "@/components/ui/LayerLegend";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { projects } from "@/data/projects";
+import { BorderFlowRing } from "@/components/ui/BorderFlowRing";
+import { flowAttributes, mainLayer } from "@/lib/layers";
 import type { Project } from "@/data/types";
 
 /** Technologies shown on a list card; the case study has the full stack */
@@ -16,30 +19,20 @@ function ProjectLinks({ project }: { project: Project }) {
   return (
     <ul className="flex flex-wrap gap-x-6 gap-y-2">
       <li>
-        <Link href={`/projects/${slug}`} className="link">
+        <Link href={`/projects/${slug}`} className="link link-sweep">
           Read case study<span className="sr-only"> for {title}</span>
         </Link>
       </li>
       {links.live ? (
         <li>
-          <a
-            href={links.live}
-            className="link"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <a href={links.live} className="link" target="_blank" rel="noopener noreferrer">
             Visit live site<span className="sr-only"> for {title}</span>
           </a>
         </li>
       ) : null}
       {links.code ? (
         <li>
-          <a
-            href={links.code}
-            className="link"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <a href={links.code} className="link" target="_blank" rel="noopener noreferrer">
             View code<span className="sr-only"> for {title}</span>
           </a>
         </li>
@@ -52,19 +45,30 @@ function FeaturedProject({ project }: { project: Project }) {
   const { links, title, slug } = project;
 
   return (
-    <article className="rule layout-split rounded-lg border p-4 sm:p-8 md:items-center">
-      <ProjectScreenshot
-        project={project}
-        sizes="(min-width: 1152px) 540px, (min-width: 768px) 45vw, 100vw"
-      />
-      <div>
-        <h3 className="type-h3">{title}</h3>
+    <article
+      data-main-layer={mainLayer(project.stack)}
+      {...flowAttributes(project.stack)}
+      className="project-item project-feature border-flow glass layout-split rounded-lg p-4 sm:p-8 md:items-center"
+    >
+      <BorderFlowRing />
+      <div data-reveal="slide-left">
+        <ProjectTransition slug={slug} part="shot">
+          <ProjectScreenshot
+            project={project}
+            sizes="(min-width: 1152px) 540px, (min-width: 768px) 45vw, 100vw"
+          />
+        </ProjectTransition>
+      </div>
+      <div data-reveal="fade">
+        <ProjectTransition slug={slug} part="title">
+          <h3 className="type-h3">{title}</h3>
+        </ProjectTransition>
         <p className="type-body mt-3">{project.summary}</p>
         <p className="type-small mt-3">{project.role}</p>
         <ul className="mt-4 flex flex-wrap gap-2">
           {project.stack.map((tech) => (
             <li key={tech.name}>
-              <Badge layer={tech.layer}>{tech.name}</Badge>
+              <TechBadge name={tech.name} layer={tech.layer} />
             </li>
           ))}
         </ul>
@@ -90,19 +94,28 @@ function FeaturedProject({ project }: { project: Project }) {
 
 function ProjectCard({ project }: { project: Project }) {
   return (
-    <article className="flex h-full flex-col gap-4">
-      <ProjectScreenshot
-        project={project}
-        sizes="(min-width: 1152px) 540px, (min-width: 640px) 45vw, 100vw"
-      />
+    <article
+      data-main-layer={mainLayer(project.stack)}
+      {...flowAttributes(project.stack)}
+      className="project-item border-flow glass flex h-full flex-col gap-4 rounded-lg p-4"
+    >
+      <BorderFlowRing />
+      <ProjectTransition slug={project.slug} part="shot">
+        <ProjectScreenshot
+          project={project}
+          sizes="(min-width: 1152px) 540px, (min-width: 640px) 45vw, 100vw"
+        />
+      </ProjectTransition>
       <div>
-        <h3 className="type-h3">{project.title}</h3>
+        <ProjectTransition slug={project.slug} part="title">
+          <h3 className="type-h3">{project.title}</h3>
+        </ProjectTransition>
         <p className="type-body mt-2">{project.summary}</p>
       </div>
       <ul className="flex flex-wrap gap-2">
         {project.stack.slice(0, CARD_TECH_LIMIT).map((tech) => (
           <li key={tech.name}>
-            <Badge layer={tech.layer}>{tech.name}</Badge>
+            <TechBadge name={tech.name} layer={tech.layer} />
           </li>
         ))}
       </ul>
@@ -118,11 +131,7 @@ export function Projects() {
   const others = projects.filter((project) => project !== featured);
 
   return (
-    <section
-      id="projects"
-      aria-labelledby="projects-heading"
-      className="section"
-    >
+    <section id="projects" aria-labelledby="projects-heading" className="section">
       <div className="container-page">
         <SectionHeading
           id="projects-heading"
@@ -137,7 +146,7 @@ export function Projects() {
         {others.length > 0 ? (
           <ul className="layout-cards mt-12">
             {others.map((project) => (
-              <li key={project.slug}>
+              <li key={project.slug} data-reveal="fade">
                 <ProjectCard project={project} />
               </li>
             ))}

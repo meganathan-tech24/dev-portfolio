@@ -11,11 +11,7 @@ export function generateStaticParams() {
   return projects.map((project) => ({ slug: project.slug }));
 }
 
-export default async function Image({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const project = projects.find((item) => item.slug === slug);
   if (!project) notFound();
@@ -23,10 +19,7 @@ export default async function Image({
   return new ImageResponse(
     <div tw="flex h-full w-full flex-col justify-between bg-neutral-900 p-16 text-neutral-100">
       <div tw="flex flex-col">
-        <div
-          tw="text-3xl text-neutral-400"
-          style={{ fontFamily: "Archivo", fontWeight: 600 }}
-        >
+        <div tw="text-3xl text-neutral-400" style={{ fontFamily: "Archivo", fontWeight: 600 }}>
           {site.name}
         </div>
         <div

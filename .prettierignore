@@ -1,8 +1,14 @@
 .next
 node_modules
+out
+coverage
+playwright-report
+test-results
 package-lock.json
 public
 docs
+
+# Project docs: CLAUDE.md is the spec, so Prettier must never rewrite it
 CLAUDE.md
 AGENTS.md
 README.md

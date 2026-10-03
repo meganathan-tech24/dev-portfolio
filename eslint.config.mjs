@@ -1,6 +1,7 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
+import prettier from "eslint-config-prettier/flat";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -13,6 +14,8 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  // Last, so it switches off every ESLint rule that would fight Prettier's formatting
+  prettier,
 ]);
 
 export default eslintConfig;

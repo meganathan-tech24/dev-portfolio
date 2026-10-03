@@ -10,7 +10,12 @@ type ProjectScreenshotProps = {
   index?: number;
 };
 
-/** A screenshot of a project (the first by default), or a marked TODO frame while there is none */
+/**
+ * A screenshot of a project (the first by default). Until there is one, a designed
+ * placeholder: a browser-window frame with the project name and a stripe for each layer
+ * the project uses, plus a small TODO note. The frame clips its content, so inside a
+ * `.project-item` the image can zoom slightly on hover.
+ */
 export function ProjectScreenshot({
   project,
   sizes,
@@ -20,22 +25,41 @@ export function ProjectScreenshot({
   const screenshot = project.screenshots[index];
 
   if (!screenshot) {
+    const layers = [...new Set(project.stack.map((tech) => tech.layer))];
+
     return (
-      <div className="rule type-small flex aspect-video items-center rounded-lg border border-dashed bg-neutral-50 p-4 dark:bg-neutral-800/50">
-        TODO: add a screenshot of {project.title}
+      <div aria-hidden="true" className="rule shot">
+        <div className="shot-inner">
+          <div className="window-bar rule">
+            <span className="window-dot" />
+            <span className="window-dot" />
+            <span className="window-dot" />
+          </div>
+          <div className="window-body">
+            <p className="placeholder-title">{project.title}</p>
+            <div className="grid gap-1.5">
+              {layers.map((layer) => (
+                <span key={layer} data-layer={layer} className="layer-fill block h-1" />
+              ))}
+            </div>
+            <p className="type-small">TODO: screenshot</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <Image
-      src={screenshot.src}
-      alt={screenshot.alt}
-      width={screenshot.width}
-      height={screenshot.height}
-      sizes={sizes}
-      priority={priority}
-      className="rule h-auto w-full rounded-lg border"
-    />
+    <div className="rule shot">
+      <Image
+        src={screenshot.src}
+        alt={screenshot.alt}
+        width={screenshot.width}
+        height={screenshot.height}
+        sizes={sizes}
+        priority={priority}
+        className="shot-inner h-auto w-full"
+      />
+    </div>
   );
 }
