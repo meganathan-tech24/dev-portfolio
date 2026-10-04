@@ -10,6 +10,9 @@
   --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-source-serif), ui-serif, Georgia, serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  /* An extra, smaller breakpoint (480px) so type can step up on large phones */
+  --breakpoint-xs: 30rem;
 }
 
 /* ==========================================================================
@@ -513,11 +516,87 @@
     stroke: var(--layer-fg);
   }
 
-  /* Thin line from a diagram layer towards the page edge (decorative) */
-  .layer-line {
-    @apply pointer-events-none absolute top-1/2 left-full h-px w-screen origin-left;
-    background-color: var(--layer-fg);
-    --load-start: 500ms;
+  /* ---- Circuit traces (hero) ---- */
+  /* Colours per layer: the 600 shades in light mode (clean on white), the 300 shades in dark
+     mode where the pulses also get a soft glow. Pulses are brighter than the traces. */
+  .circuit {
+    @apply transition-opacity duration-200;
+    --circuit: var(--color-sky-600);
+    --circuit-pulse: var(--color-sky-400);
+    @variant dark {
+      --circuit: var(--color-sky-300);
+      --circuit-pulse: var(--color-sky-200);
+    }
+  }
+
+  .circuit[data-layer="application"] {
+    --circuit: var(--color-emerald-600);
+    --circuit-pulse: var(--color-emerald-400);
+    @variant dark {
+      --circuit: var(--color-emerald-300);
+      --circuit-pulse: var(--color-emerald-200);
+    }
+  }
+
+  .circuit[data-layer="data"] {
+    --circuit: var(--color-amber-600);
+    --circuit-pulse: var(--color-amber-400);
+    @variant dark {
+      --circuit: var(--color-amber-300);
+      --circuit-pulse: var(--color-amber-200);
+    }
+  }
+
+  .circuit[data-layer="infrastructure"] {
+    --circuit: var(--color-fuchsia-600);
+    --circuit-pulse: var(--color-fuchsia-400);
+    @variant dark {
+      --circuit: var(--color-fuchsia-300);
+      --circuit-pulse: var(--color-fuchsia-200);
+    }
+  }
+
+  .circuit-trace,
+  .circuit-pad,
+  .circuit-pulse {
+    fill: none;
+    stroke: var(--circuit);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+  }
+
+  .circuit-trace {
+    stroke-dasharray: 1;
+  }
+
+  .circuit-pad {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  /* The pulse is one short dash (0.12 of the path) that starts before the path and ends past it.
+     It only exists while motion is allowed. */
+  .circuit-pulse {
+    display: none;
+    stroke: var(--circuit-pulse);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-dasharray: 0.12 2;
+    stroke-dashoffset: 0.12;
+  }
+
+  :where(.dark, .dark *) .circuit-pulse {
+    filter: drop-shadow(0 0 0.25rem var(--circuit-pulse));
+  }
+
+  /* Hovering or focusing a diagram layer brightens its traces; the others dim */
+  .stack-trace:has(.diagram-layer:is(:hover, :focus-visible))
+    .circuit:not(.diagram-layer:is(:hover, :focus-visible) ~ .circuit) {
+    opacity: 0.3;
+  }
+
+  .diagram-layer:is(:hover, :focus-visible) ~ .circuit {
+    --circuit: var(--circuit-pulse);
   }
 
   /* ---- Stack diagram: interaction and request trace ---- */
@@ -709,49 +788,245 @@
     }
   }
 
-  /* ---- Contact stack ---- */
-  /* Rows of the Contact panel, one per channel. The layer comes from data-layer on the <li>.
-     The 4px edge widens and the row takes the layer tint on hover and focus. */
-  .contact-stack > li + li {
-    @apply border-t border-neutral-200 dark:border-neutral-700;
+  /* ---- Contact: "Get in touch" ---- */
+  /* The stage is the whole section. ContactStage sets data-in (once, when it enters the
+     viewport) and data-active (while it is on screen), and --mx / --my from the mouse. */
+  .contact-stage {
+    @apply relative isolate flex flex-col justify-center overflow-hidden py-16 sm:py-20 lg:py-24;
+
+    /* A faint 48px grid, only visible in a soft circle around the cursor */
+    &::before {
+      @apply absolute inset-0 -z-10;
+      content: "";
+      background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: 3rem 3rem;
+      mask-image: radial-gradient(
+        26rem circle at var(--mx, 50%) var(--my, 40%),
+        black 0%,
+        transparent 70%
+      );
+    }
+  }
+
+  /* Touch devices have no cursor: a static grid that fades out towards the bottom */
+  @media (pointer: coarse) {
+    .contact-stage::before {
+      mask-image: linear-gradient(black, transparent 80%);
+    }
+  }
+
+  /* Grid line colour: neutral at low opacity */
+  :root {
+    --grid-line: color-mix(in oklab, var(--color-neutral-900) 7%, transparent);
+  }
+
+  :root.dark {
+    --grid-line: color-mix(in oklab, var(--color-neutral-100) 7%, transparent);
+  }
+
+  .type-cta {
+    @apply font-display text-3xl leading-none font-black tracking-tighter xs:text-4xl sm:text-5xl lg:text-6xl;
+  }
+
+  .contact-status {
+    @apply inline-flex items-center gap-3 rounded-full border border-neutral-200 bg-white py-2 pr-4 pl-3 font-display text-sm text-neutral-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400;
+  }
+
+  /* Headline. Line 1 is the expanded Archivo width; line 2 is an outline with a solid copy
+     (.cta-fill) that is revealed over it from left to right. These are the final states, so the
+     headline is complete without JavaScript and with reduced motion. */
+  .cta-line1 {
+    @apply block;
+    font-stretch: 118%;
+  }
+
+  .cta-line2 {
+    @apply relative block text-transparent;
+    font-stretch: 118%;
+    -webkit-text-stroke: 2px var(--color-neutral-200);
+  }
+
+  :where(.dark, .dark *) .cta-line2 {
+    -webkit-text-stroke-color: var(--color-neutral-700);
+  }
+
+  .cta-fill {
+    @apply absolute inset-0 text-neutral-900 select-none dark:text-neutral-100;
+    -webkit-text-stroke: 0;
+  }
+
+  /* Four layer colours in a row, after the question mark */
+  .cta-bar {
+    @apply inline-flex origin-left overflow-hidden rounded-xs;
+    width: 0.42em;
+    height: 0.12em;
+    margin-left: 0.12em;
+    vertical-align: 0.08em;
+
+    & > * {
+      @apply flex-1;
+    }
+  }
+
+  /* The big email: the address is the call to action */
+  .contact-big {
+    @apply relative mt-3 block w-full cursor-pointer rounded-lg text-left font-display text-base leading-tight font-extrabold tracking-tight text-neutral-900 xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl dark:text-neutral-100;
+    font-stretch: 112%;
+
+    /* The address stays on one line */
+    & > span:first-child {
+      @apply whitespace-nowrap;
+    }
+  }
+
+  /* One letter: rises and takes its layer colour as the cursor comes close (--t, 0 to 1) */
+  .cta-letter {
+    @apply inline-block;
+    color: color-mix(in oklab, var(--layer-fg) calc(var(--t, 0) * 100%), currentColor);
+  }
+
+  /* "Copy email" label that follows the mouse over the address (touch screens use the button) */
+  .contact-cursor {
+    @apply pointer-events-none absolute z-10 mt-5 ml-5 font-sans text-base tracking-normal whitespace-nowrap;
+    font-stretch: 100%;
+  }
+
+  @media (pointer: coarse) {
+    .contact-cursor {
+      display: none;
+    }
+  }
+
+  .contact-kbd {
+    @apply hidden rounded-md border border-neutral-200 bg-neutral-50 px-2 py-0.5 font-mono text-xs whitespace-nowrap text-neutral-600 sm:inline-block dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400;
+  }
+
+  @media (pointer: coarse) {
+    .contact-kbd {
+      display: none;
+    }
+  }
+
+  .contact-pill {
+    @apply inline-flex cursor-pointer items-center gap-2 rounded-full bg-neutral-900 px-5 py-3 font-display text-base font-semibold text-white transition duration-200 motion-safe:hover:-translate-y-0.5 dark:bg-neutral-100 dark:text-neutral-900;
+
+    &[data-copied="true"] {
+      @apply bg-emerald-700 text-white dark:bg-emerald-300 dark:text-emerald-950;
+    }
+  }
+
+  .contact-ghost {
+    @apply border-b-2 border-transparent px-1.5 py-3 font-display text-base font-semibold transition-colors duration-200 hover:border-sky-700 dark:hover:border-sky-300;
+  }
+
+  /* Four segments, one per layer; they light up in turn when the email is copied */
+  .contact-pipe {
+    @apply mt-5 grid grid-cols-4 gap-2;
+  }
+
+  .contact-pipe-step {
+    @apply grid gap-2;
+  }
+
+  .contact-pipe-bar {
+    @apply block h-1.5 origin-bottom rounded-full opacity-30;
+  }
+
+  .contact-pipe[data-sent="true"] .contact-pipe-bar {
+    @apply opacity-100;
+  }
+
+  .contact-pipe-step:nth-child(2) .contact-pipe-bar {
+    animation-delay: 140ms;
+  }
+
+  .contact-pipe-step:nth-child(3) .contact-pipe-bar {
+    animation-delay: 280ms;
+  }
+
+  .contact-pipe-step:nth-child(4) .contact-pipe-bar {
+    animation-delay: 420ms;
+  }
+
+  /* Link rows: full width, separated by rules; the layer colour wipes in from the left */
+  .contact-rows {
+    @apply border-b border-neutral-200 dark:border-neutral-700;
   }
 
   .contact-row {
-    @apply relative flex items-center gap-4 py-5 pr-5 pl-7 transition-colors duration-200;
+    @apply relative flex items-center gap-4 overflow-hidden border-t border-neutral-200 px-2 py-4 sm:gap-5 sm:px-4 sm:py-5 dark:border-neutral-700;
 
     &::before {
-      @apply absolute inset-y-0 left-0 w-1 transition-[width] duration-200;
+      @apply pointer-events-none absolute inset-0 origin-left scale-x-0 transition-transform duration-500 ease-out;
       content: "";
-      background-color: var(--layer-fg);
-    }
-
-    &:is(a:hover, a:focus-visible, :focus-within, :hover) {
       background-color: var(--layer-tint);
     }
 
-    &:is(a:hover, a:focus-visible, :focus-within, :hover)::before {
-      @apply w-2;
+    & > * {
+      @apply relative;
+    }
+
+    &:is(a:hover, a:focus-visible)::before {
+      @apply scale-x-100;
     }
   }
 
   .contact-icon {
-    @apply flex size-10 shrink-0 items-center justify-center rounded-md transition-transform duration-200;
+    @apply flex size-10 shrink-0 items-center justify-center rounded-lg;
     background-color: var(--layer-tint);
     color: var(--layer-fg);
   }
 
-  .contact-row:is(a:hover, a:focus-visible, :focus-within, :hover) .contact-icon {
-    @apply motion-safe:-translate-y-0.5;
+  .contact-row-value {
+    @apply font-display text-lg font-semibold wrap-anywhere transition-transform duration-300 xs:text-xl sm:text-2xl;
+    font-stretch: 112%;
   }
 
-  /* The email row has two buttons. They sit under the address unless the panel is wide
-     enough (container query), so the address never wraps mid-word. */
-  .contact-row-email {
-    @apply flex-wrap @2xl:flex-nowrap;
+  .contact-row:is(a:hover, a:focus-visible) .contact-row-value {
+    @apply motion-safe:translate-x-2;
   }
 
-  .contact-actions {
-    @apply flex w-full flex-wrap items-center gap-2 @2xl:ml-auto @2xl:w-auto @2xl:shrink-0;
+  /* Round arrow button: fills with the layer colour and turns on hover and focus */
+  .contact-go {
+    @apply ml-auto flex size-10 shrink-0 items-center justify-center rounded-full border border-neutral-300 text-neutral-600 transition duration-300 dark:border-neutral-600 dark:text-neutral-400;
+  }
+
+  .contact-row:is(a:hover, a:focus-visible) .contact-go {
+    @apply text-white motion-safe:-rotate-45 dark:text-neutral-900;
+    background-color: var(--layer-fg);
+    border-color: var(--layer-fg);
+  }
+
+  /* Traces along the bottom of the section */
+  .contact-traces {
+    @apply mt-10 block h-auto w-full;
+  }
+
+  .contact-trace,
+  .contact-trace-pulse {
+    @apply fill-none stroke-2;
+    stroke: var(--layer-fg);
+  }
+
+  .contact-trace {
+    @apply opacity-50;
+  }
+
+  /* One short dash that travels along the trace (only while motion is allowed) */
+  .contact-trace-pulse {
+    @apply hidden stroke-3;
+    stroke-linecap: round;
+    stroke-dasharray: 0.05 0.95;
+  }
+
+  :where(.dark, .dark *) .contact-trace-pulse {
+    filter: drop-shadow(0 0 0.25rem var(--layer-fg));
+  }
+
+  .contact-toast {
+    @apply rounded-full bg-neutral-900 px-5 py-3 font-display text-sm font-semibold text-white dark:bg-neutral-100 dark:text-neutral-900;
   }
 
   /* ---- Links ---- */
@@ -1044,9 +1319,163 @@
   }
 }
 
-@keyframes draw-x {
+/* Circuit traces: draw outwards, pads pop in, pulses travel along the primary trace.
+   A pulse takes 12% of the 10s request-trace loop and starts when the dot reaches the layer
+   (0, 16.67, 33.33 and 50%, and again on the way up), so the hero moves as one system.
+   Extra pulses fill the quiet stretches. Between events the dash rests past the path end;
+   the 0.01% steps make the jump back to the start invisible. */
+@keyframes circuit-draw {
   from {
-    transform: scaleX(0);
+    stroke-dashoffset: 1;
+  }
+}
+
+@keyframes circuit-pop {
+  from {
+    transform: scale(0);
+  }
+}
+
+@keyframes circuit-appear {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes circuit-pulse-1 {
+  0% {
+    stroke-dashoffset: 0.12;
+  }
+
+  12%,
+  44.99% {
+    stroke-dashoffset: -1;
+  }
+
+  45% {
+    stroke-dashoffset: 0.12;
+  }
+
+  57%,
+  100% {
+    stroke-dashoffset: -1;
+  }
+}
+
+@keyframes circuit-pulse-2 {
+  0%,
+  16.66% {
+    stroke-dashoffset: 0.12;
+  }
+
+  28.67%,
+  83.32% {
+    stroke-dashoffset: -1;
+  }
+
+  83.33% {
+    stroke-dashoffset: 0.12;
+  }
+
+  95.33%,
+  100% {
+    stroke-dashoffset: -1;
+  }
+}
+
+@keyframes circuit-pulse-3 {
+  0%,
+  33.32% {
+    stroke-dashoffset: 0.12;
+  }
+
+  45.33%,
+  66.66% {
+    stroke-dashoffset: -1;
+  }
+
+  66.67% {
+    stroke-dashoffset: 0.12;
+  }
+
+  78.67%,
+  100% {
+    stroke-dashoffset: -1;
+  }
+}
+
+@keyframes circuit-pulse-4 {
+  0%,
+  11.99% {
+    stroke-dashoffset: 0.12;
+  }
+
+  24%,
+  49.99% {
+    stroke-dashoffset: -1;
+  }
+
+  50% {
+    stroke-dashoffset: 0.12;
+  }
+
+  62%,
+  87.99% {
+    stroke-dashoffset: -1;
+  }
+
+  88%,
+  88.01% {
+    stroke-dashoffset: 0.12;
+  }
+
+  100% {
+    stroke-dashoffset: -1;
+  }
+}
+
+/* Faster, continuous pulses while a layer is hovered or focused */
+@keyframes circuit-pulse-hover {
+  0% {
+    stroke-dashoffset: 0.12;
+  }
+
+  60%,
+  100% {
+    stroke-dashoffset: -1;
+  }
+}
+
+@keyframes trace-run {
+  from {
+    stroke-dashoffset: 1;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* A layer segment of the "delivered" bar: lights up, swells, settles, fades back */
+@keyframes pipe-light {
+  0% {
+    opacity: 0.3;
+    transform: scaleY(1);
+  }
+
+  15% {
+    opacity: 1;
+    transform: scaleY(2.2);
+  }
+
+  30%,
+  80% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+
+  100% {
+    opacity: 0.3;
   }
 }
 
@@ -1445,9 +1874,44 @@
       animation-delay: calc(var(--load-step, 0) * 100ms);
     }
 
-    .load-draw {
-      animation: draw-x 800ms ease-out backwards;
-      animation-delay: calc(var(--load-start, 0ms) + var(--load-step, 0) * 100ms);
+    /* Traces draw outwards layer by layer after the layers have landed; the pads pop in at the end */
+    .circuit-trace {
+      animation: circuit-draw 700ms ease-out backwards;
+      animation-delay: calc(700ms + var(--load-step, 0) * 200ms);
+    }
+
+    .circuit-pad {
+      animation: circuit-pop 250ms ease-out backwards;
+      animation-delay: calc(1350ms + var(--load-step, 0) * 200ms);
+    }
+
+    /* Pulses share the request trace's loop and start (10s, --trace-delay) so they stay in sync
+       with the dot, and stay hidden until the traces have been drawn */
+    .circuit-pulse {
+      display: inline;
+      animation:
+        circuit-appear 300ms linear 2300ms backwards,
+        var(--pulse, circuit-pulse-1) var(--trace-duration) linear var(--trace-delay) infinite;
+    }
+
+    .circuit-pulse-1 {
+      --pulse: circuit-pulse-1;
+    }
+
+    .circuit-pulse-2 {
+      --pulse: circuit-pulse-2;
+    }
+
+    .circuit-pulse-3 {
+      --pulse: circuit-pulse-3;
+    }
+
+    .circuit-pulse-4 {
+      --pulse: circuit-pulse-4;
+    }
+
+    .diagram-layer:is(:hover, :focus-visible) ~ .circuit .circuit-pulse {
+      animation: circuit-pulse-hover 1.4s linear infinite;
     }
 
     .trace-dot {
@@ -1482,14 +1946,61 @@
     }
 
     /* Paused by TraceController while the tab is hidden or the diagram is off screen */
-    [data-trace="paused"] :is(.trace-dot, .layer-pulse) {
+    [data-trace="paused"] :is(.trace-dot, .layer-pulse, .circuit-pulse) {
       animation-play-state: paused;
+    }
+
+    .contact-trace-pulse {
+      display: inline;
+      animation: trace-run 3.2s linear infinite;
+      animation-delay: calc(var(--load-step, 0) * 800ms);
+    }
+
+    /* Paused while the Contact section is off screen */
+    .contact-stage:not([data-active="true"]) .contact-trace-pulse {
+      animation-play-state: paused;
+    }
+
+    .contact-pipe[data-sent="true"] .contact-pipe-bar {
+      animation: pipe-light 2.2s ease-out both;
     }
 
     .name-letter {
       animation: expand-width 560ms ease-out backwards;
       animation-delay: calc((var(--word, 0) * 6 + var(--letter, 0)) * 30ms);
     }
+  }
+}
+
+/* Contact headline: starts condensed and outlined, then animates once the section has
+   entered the viewport (data-in). Only with scripting on and motion allowed; otherwise the
+   final state above is what shows. */
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  .cta-line1 {
+    font-stretch: 70%;
+    transition: font-stretch 1.1s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .cta-fill {
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 1.2s cubic-bezier(0.65, 0, 0.35, 1) 0.5s;
+  }
+
+  .cta-bar {
+    transform: scaleX(0);
+    transition: transform 0.6s ease-out 1.5s;
+  }
+
+  [data-in] .cta-line1 {
+    font-stretch: 118%;
+  }
+
+  [data-in] .cta-fill {
+    clip-path: inset(0);
+  }
+
+  [data-in] .cta-bar {
+    transform: none;
   }
 }
 

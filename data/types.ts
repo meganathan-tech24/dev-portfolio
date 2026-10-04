@@ -21,6 +21,26 @@ export type Availability = {
   open: boolean;
 };
 
+export type ContactCopy = {
+  /** Second part of the status pill, hidden on small screens (after the availability text) */
+  statusMore: string;
+  /** The two lines of the headline */
+  headline: string;
+  lede: string;
+  emailLabel: string;
+  shortcutHint: string;
+  copyLabel: string;
+  copiedLabel: string;
+  mailLabel: string;
+  toastCopied: string;
+  toastFailed: string;
+  /** Labels of the link rows */
+  linkedinLabel: string;
+  githubLabel: string;
+  /** Line under the traces at the bottom of the section */
+  closing: string;
+};
+
 export type SiteLinks = {
   email: string;
   linkedin: string;
@@ -67,8 +87,8 @@ export type Site = {
   siteUrl: string;
   /** Navbar links, in page order */
   nav: NavItem[];
-  /** One plain sentence under the Contact heading */
-  contactIntro: string;
+  /** All text of the "Get in touch" section */
+  contact: ContactCopy;
   /** What this site is built with, shown as small logos in the footer */
   builtWith: Skill[];
   seo: {

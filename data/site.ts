@@ -30,14 +30,28 @@ export const site = {
     email: "meganathankpm220@gmail.com",
     linkedin: "https://www.linkedin.com/in/meganathan-tech-2k",
     // TODO: GitHub profile URL (not in the resume)
-    github: "TODO: GitHub profile URL",
+    github: "https://github.com/meganathan-tech24",
     // TODO: public/resume.pdf still contains phone and address. Replace it
     // with a web-safe version, then set this to "/resume.pdf"
     resume: "TODO: web-safe resume path",
   },
   // TODO: production URL once there is a domain
   siteUrl: "TODO: production URL",
-  contactIntro: "I'm open to full-stack roles. Email is the quickest way to reach me.",
+  contact: {
+    statusMore: "and freelance projects",
+    headline: "Got something to build?",
+    lede: "I build multi-tenant web apps and learning platforms with React, Next.js, Node.js and PostgreSQL. If you're hiring or have a product in mind, email me.",
+    emailLabel: "Email, the fastest way to reach me",
+    shortcutHint: "Press C",
+    copyLabel: "Copy email",
+    copiedLabel: "Copied",
+    mailLabel: "Open in mail app",
+    toastCopied: "Email copied. Talk soon.",
+    toastFailed: "Could not copy. Use the mail app link instead.",
+    linkedinLabel: "LinkedIn",
+    githubLabel: "GitHub",
+    closing: "Interface, application, data, infrastructure. Built end to end.",
+  },
   builtWith: [
     { name: "Next.js", icon: "nextjs" },
     { name: "Tailwind CSS", icon: "tailwind" },

@@ -1,6 +1,7 @@
+import { CircuitTraces } from "@/components/CircuitTraces";
 import { DiagramLayer } from "@/components/DiagramLayer";
 import { TraceController } from "@/components/TraceController";
-import { Reveal, loadStep } from "@/components/ui/Reveal";
+import { Reveal } from "@/components/ui/Reveal";
 import { skillGroups } from "@/data/skills";
 import { cn } from "@/lib/utils";
 
@@ -72,12 +73,8 @@ export function StackDiagram({ className }: { className?: string }) {
                 {/* Brightens as the request trace passes through this layer */}
                 <span aria-hidden="true" className={`layer-pulse trace-pulse-${index + 1}`} />
               </DiagramLayer>
-              {/* Line from this layer towards the page edge, drawn once after the layers land */}
-              <span
-                aria-hidden="true"
-                data-layer={group.layer}
-                className={cn("layer-line load-draw", loadStep(index))}
-              />
+              {/* Circuit traces from this layer towards the page edge (decorative) */}
+              <CircuitTraces layer={group.layer} step={index} />
             </Reveal>
           ))}
 
