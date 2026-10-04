@@ -11,8 +11,8 @@ import { site } from "@/data/site";
 import { isTodo } from "@/lib/utils";
 
 /**
- * "Editorial + request trace". From lg the section is a grid of [gutter] [content half] [stage
- * half to the page edge]; below lg it stacks, text first. The left column is calm and unboxed;
+ * "Editorial + request trace". Inside the page container, from lg a 5fr / 7fr grid (`.layout-hero`);
+ * below lg it stacks, text first. The left column is calm and unboxed;
  * the stage on the right is a glass panel with the exploded stack.
  */
 export function Hero() {
@@ -23,7 +23,7 @@ export function Hero() {
     <HeroState>
       <span aria-hidden="true" className="hero-field" />
 
-      <div className="container-page hero-grid">
+      <div className="container-page layout-hero">
         {/* The size container: the name is sized from this column's width, not the viewport */}
         <div className="hero-text">
           <div className="hero-in hero-in-status flex flex-wrap items-center gap-x-4 gap-y-2">

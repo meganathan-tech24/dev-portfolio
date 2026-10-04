@@ -207,12 +207,16 @@ layer appears (diagram, Stack section, project tags, timeline tech lists).
   rebuilt with Tailwind, the global classes and Motion, no hex codes; the
   prototype's inline styles are only for the prototype). At least the
   viewport height minus the header on desktop
-  - Layout from `lg`: a grid of `[gutter] [content half] [stage half to the
-    page edge]`. The left half aligns with `.container-page`; the right half
-    is a "stage" panel that starts at the centre line and bleeds off the right
-    edge of the screen (rounded only on its left corners, no right border).
-    Columns are `min-w-0`; nothing from the left half may cross into the stage.
-    Below `lg` everything stacks: text first, then the stage full width
+  - Layout from `lg`: the hero sits inside the same container as the nav and
+    the other sections (same max width and side padding; the stage's right
+    edge lines up with the nav's right edge, it never runs to the scrollbar).
+    Two columns in a 5fr / 7fr split, defined once as a `.layout-hero` class
+    in `globals.css` (`grid-template-columns: minmax(0,5fr) minmax(0,7fr)`
+    from `lg`; no arbitrary value in the component) with a fixed gap (about
+    `gap-12`): text left, stage right.
+    Both columns are `min-w-0` so neither can overflow; nothing from the left
+    column may cross into the stage. Below `lg` everything stacks: text
+    first, then the stage full width
   - Left column (calm and editorial, no boxes), top to bottom, spacing on an
     8px rhythm (32px between groups, 24px inside a group, 48px before the
     facts):
@@ -246,7 +250,10 @@ layer appears (diagram, Stack section, project tags, timeline tech lists).
        of one segment per year; Now at "Teckollab" with the role under it;
        Latest build "Coheart" with an underlined "Read case study" link.
        Stacks to one column below `sm`
-  - Right column: the "stage", a glass panel with a 24px blueprint grid:
+  - Right column: the "stage", a glass panel with a 24px blueprint grid,
+    fully rounded (`rounded-3xl`) with a border on all sides, `min-w-0` and
+    `overflow-hidden`. The body has 24px inner padding (`p-6`) so no plate,
+    trace or layer card ever touches the panel border:
     - Top bar: `trace` (mono, muted) + "Loading a cohort dashboard", a
       Request/Response tag (border in the active layer's colour), "Layer N of
       4" (mono) and a Pause/Play button (`aria-pressed`) that stops all stage
@@ -610,7 +617,7 @@ Rules for motion
   - `.btn`, `.btn-primary`, `.btn-secondary`, `.badge`
   - `.layer-band`: Stack section band
   - `.nav-link`, `.nav-mobile-menu`, `.timeline-item`, `.prose-case-study`
-  - `.glass`, `.glass-strong`, `.border-flow`, `.edu-card`
+  - `.glass`, `.glass-strong`, `.border-flow`, `.edu-card`, `.layout-hero`
 - Keyframes for the background drift and border sweep are defined once as
   `--animate-*` tokens in `@theme`
 - Layer colours are driven by a `data-layer="interface|application|data|infrastructure"`
@@ -861,8 +868,8 @@ for me to say "next". Never start the next step on your own.
   email card with magnetic lean and copy, link cards with spotlight, `C`
   shortcut, toast, cursor grid, bottom traces, reduced motion, both themes)
 - Step 8.12: Hero rebuild ("editorial + request trace") from the "Hero" spec
-  and `docs/design/hero.html`: content/stage grid with the stage bleeding to
-  the right edge, editorial left column, facts row, stage with top bar,
+  and `docs/design/hero.html`: 5fr/7fr grid inside the page container (stage
+  aligned with the nav's right edge, `min-w-0`, `p-6`, `overflow-hidden`), editorial left column, facts row, stage with top bar,
   exploded stack, layer cards and Pause button, one shared active-layer
   state, short-screen spacing; add `requestStep` to each layer in
   `skills.ts` and `location`/`now` to `site.ts`; test with the real Archivo

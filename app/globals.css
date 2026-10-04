@@ -398,7 +398,7 @@
 
   /* ---- Page structure ---- */
   .container-page {
-    @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8;
+    @apply mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8;
   }
 
   .section {
@@ -767,31 +767,20 @@
     filter: blur(7.5rem);
   }
 
-  /* Below lg everything stacks inside the page container. From lg the container becomes a grid:
-     [gutter] [content half] [stage half] [gutter]. The two gutters share what the centred 72rem
-     container leaves free, so the content half starts where .container-page's content does
-     (2rem padding) and ends at the centre line; the stage starts at the centre line and its
-     last column is the right gutter, so it bleeds to the screen edge. */
-  .hero-grid {
-    @apply grid items-center gap-10;
+  /* The hero sits inside .container-page, the same container as the nav, so the stage's right
+     edge lines up with the nav's. Below lg everything stacks; from lg two columns, 5fr text and
+     7fr stage. Both columns are min-w-0 so neither can overflow into the other. */
+  .layout-hero {
+    @apply grid items-center gap-10 lg:gap-12;
+
+    & > * {
+      @apply min-w-0;
+    }
   }
 
   @media (min-width: 64rem) {
-    .hero-grid {
-      max-width: none;
-      margin: 0;
-      padding: 0;
-      gap: 0;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 36rem) minmax(0, 36rem) minmax(0, 1fr);
-    }
-
-    .hero-text {
-      grid-column: 2;
-      padding-inline: 2rem 3rem;
-    }
-
-    .stage-panel {
-      grid-column: 3 / -1;
+    .layout-hero {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
     }
   }
 
@@ -936,8 +925,7 @@
   }
 
   /* ---- The stage (right half of the hero) ---- */
-  /* Combine with .glass. A 24px blueprint grid; from lg it starts at the centre line and bleeds
-     off the right edge, so only its left corners are round and it has no right border. */
+  /* Combine with .glass (which gives it the border on all sides). A 24px blueprint grid. */
   .stage-panel {
     @apply relative flex min-w-0 flex-col overflow-hidden rounded-3xl;
     background-image:
@@ -948,7 +936,6 @@
 
   @media (min-width: 64rem) {
     .stage-panel {
-      @apply rounded-r-none border-r-0;
       min-height: min(42.5rem, calc(100svh - 8.75rem));
     }
   }
@@ -983,21 +970,20 @@
   /* One column up to xl (stack, then the cards in a grid); from xl the cards sit beside the
      stack, level with their plates */
   .stage-body {
-    @apply relative grid flex-1 items-center gap-2 pt-3;
+    @apply relative grid min-w-0 flex-1 items-center gap-2 overflow-hidden p-6;
   }
 
   .stage-body > .stack-iso {
-    @apply mx-auto max-w-xs;
+    @apply mx-auto max-w-64;
   }
 
   .stage-cards {
-    @apply grid gap-2 px-4 pb-1 sm:grid-cols-2;
+    @apply grid gap-2 sm:grid-cols-2;
   }
 
   @media (min-width: 80rem) {
     .stage-body {
-      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-      padding-left: 0.5rem;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
     }
 
     .stage-body > .stack-iso {
@@ -1005,13 +991,13 @@
     }
 
     .stage-cards {
-      @apply relative block self-stretch p-0;
+      @apply relative block self-stretch;
     }
   }
 
   /* One layer card: name in the layer colour, the step, one sentence, the technologies */
   .layer-card {
-    @apply relative flex w-full cursor-pointer flex-col rounded-lg border border-neutral-200 bg-white/70 py-3 pr-3.5 pl-4 text-left transition duration-300 dark:border-neutral-700 dark:bg-neutral-900/60;
+    @apply relative flex w-full cursor-pointer flex-col rounded-lg border border-neutral-200 bg-white/70 py-2.5 pr-3.5 pl-4 text-left transition duration-300 dark:border-neutral-700 dark:bg-neutral-900/60;
 
     /* the layer's accent bar */
     &::after {
@@ -1033,7 +1019,7 @@
 
   @media (min-width: 80rem) {
     .layer-card {
-      @apply absolute right-6 left-0;
+      @apply absolute inset-x-0;
       translate: 0 -50%;
 
       /* the dashed connector to the plate */
@@ -1077,7 +1063,7 @@
   }
 
   .layer-card-sentence {
-    @apply mt-1 font-display text-sm font-semibold text-neutral-900 dark:text-neutral-100;
+    @apply mt-1 font-display text-sm font-semibold text-neutral-900 xl:text-xs dark:text-neutral-100;
   }
 
   .layer-card-tech {
@@ -2224,19 +2210,19 @@
 
     /* How far each plate is from its exploded place while the stack is closed */
     .plate-sep-0 {
-      --sep: 140px;
+      --sep: 207px;
     }
 
     .plate-sep-1 {
-      --sep: 42px;
+      --sep: 69px;
     }
 
     .plate-sep-2 {
-      --sep: -56px;
+      --sep: -69px;
     }
 
     .plate-sep-3 {
-      --sep: -154px;
+      --sep: -207px;
     }
 
     /* The layer cards appear one after another, top to bottom, as the stack separates */

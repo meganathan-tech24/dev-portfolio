@@ -13,13 +13,13 @@ import type { KeyboardEvent } from "react";
 // 40 units are for the circuit traces; the layer cards sit beside the SVG, not inside it.
 const VIEW_LEFT = -40;
 const WIDTH = 480;
-const HEIGHT = 600;
+const HEIGHT = 800;
 const CX = 220;
 const HALF_WIDTH = 176;
 const HALF_HEIGHT = 86;
 const THICKNESS = 18;
 /** Plate centres, y, exploded. They sit at 1/5 to 4/5 of the height, which is where the cards go. */
-export const PLATE_CENTRES = [120, 240, 360, 480];
+export const PLATE_CENTRES = [160, 320, 480, 640];
 
 /** The request dot starts when the plates have separated and the traces are being drawn */
 const DOT_START_MS = 2400;
