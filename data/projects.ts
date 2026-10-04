@@ -46,6 +46,11 @@ export const projects = [
       // TODO: live URL (the resume title links to LinkedIn, not the site)
       // TODO: code link, if any (probably private client work)
     },
+    logo: {
+      alt: "Coheart logo",
+      light: { src: "/images/coheart.light.png", width: 191, height: 43 },
+      dark: { src: "/images/coheart.dark.png", width: 191, height: 43 },
+    },
     // TODO: real screenshots in /public/images, with alt text
     screenshots: [],
   },
@@ -85,12 +90,16 @@ export const projects = [
     links: {
       // TODO: live URL, code link
     },
+    logo: {
+      alt: "Culture Labs logo",
+      light: { src: "/images/culture_labs.png", width: 1079, height: 376 },
+    },
     // TODO: real screenshots
     screenshots: [],
   },
   {
     slug: "stepzero",
-    title: "StepZero",
+    title: "StepZero.eco",
     summary:
       "A sustainability platform that helps businesses assess their practices and get an improvement plan.",
     featured: false,
@@ -121,6 +130,11 @@ export const projects = [
     outcome: "TODO: describe the outcome",
     links: {
       // TODO: live URL (stepzero.eco?), code link
+    },
+    logo: {
+      alt: "StepZero.eco logo",
+      light: { src: "/images/stepzero.light-logo.png", width: 656, height: 160 },
+      dark: { src: "/images/stepzero.dark-logo.png", width: 652, height: 160 },
     },
     // TODO: real screenshots
     screenshots: [],
@@ -155,6 +169,10 @@ export const projects = [
     outcome: "TODO: describe the outcome",
     links: {
       // TODO: live URL, code link
+    },
+    logo: {
+      alt: "Footprints CDP logo",
+      light: { src: "/images/footprints-cdp.jpeg", width: 159, height: 148 },
     },
     // TODO: real screenshots
     screenshots: [],

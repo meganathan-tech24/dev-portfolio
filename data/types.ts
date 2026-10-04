@@ -233,6 +233,23 @@ export type Screenshot = {
   height: number;
 };
 
+/** One file of a project logo */
+export type LogoImage = {
+  /** Path in /public, e.g. "/images/stepzero.light-logo.png" */
+  src: string;
+  /** Intrinsic size in pixels, so next/image can reserve space */
+  width: number;
+  height: number;
+};
+
+export type ProjectLogo = {
+  alt: string;
+  /** For the light theme (and for both themes when there is no `dark` version) */
+  light: LogoImage;
+  /** A version for the dark theme, if the logo needs one */
+  dark?: LogoImage;
+};
+
 export type Project = {
   slug: string;
   title: string;
@@ -248,5 +265,7 @@ export type Project = {
   challenges: string;
   outcome: string;
   links: ProjectLinks;
+  /** Shown in the screenshot frame until there is a real screenshot */
+  logo?: ProjectLogo;
   screenshots: Screenshot[];
 };

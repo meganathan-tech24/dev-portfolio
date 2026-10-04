@@ -1,5 +1,36 @@
 import Image from "next/image";
-import type { Project } from "@/data/types";
+import type { Project, ProjectLogo } from "@/data/types";
+import { cn } from "@/lib/utils";
+
+/**
+ * The logo. One with a dark version swaps with the theme (CSS only, so no flash); one without
+ * sits on a white tile in dark mode, because dark logos disappear on a dark background.
+ */
+function ProjectLogoImage({ logo }: { logo: ProjectLogo }) {
+  const { light, dark } = logo;
+  const classes = "h-12 w-auto self-start rounded-md sm:h-14";
+
+  return (
+    <>
+      <Image
+        src={light.src}
+        alt={logo.alt}
+        width={light.width}
+        height={light.height}
+        className={cn(classes, dark ? "dark:hidden" : "dark:bg-white dark:p-2")}
+      />
+      {dark ? (
+        <Image
+          src={dark.src}
+          alt={logo.alt}
+          width={dark.width}
+          height={dark.height}
+          className={cn(classes, "hidden dark:block")}
+        />
+      ) : null}
+    </>
+  );
+}
 
 type ProjectScreenshotProps = {
   project: Project;
@@ -12,8 +43,8 @@ type ProjectScreenshotProps = {
 
 /**
  * A screenshot of a project (the first by default). Until there is one, a designed
- * placeholder: a browser-window frame with the project name and a stripe for each layer
- * the project uses, plus a small TODO note. The frame clips its content, so inside a
+ * placeholder: a browser-window frame with the project's logo (or its name, if it has none)
+ * and a stripe for each layer the project uses, plus a small TODO note. The frame clips its content, so inside a
  * `.project-item` the image can zoom slightly on hover.
  */
 export function ProjectScreenshot({
@@ -36,7 +67,11 @@ export function ProjectScreenshot({
             <span className="window-dot" />
           </div>
           <div className="window-body">
-            <p className="placeholder-title">{project.title}</p>
+            {project.logo ? (
+              <ProjectLogoImage logo={project.logo} />
+            ) : (
+              <p className="placeholder-title">{project.title}</p>
+            )}
             <div className="grid gap-1.5">
               {layers.map((layer) => (
                 <span key={layer} data-layer={layer} className="layer-fill block h-1" />
