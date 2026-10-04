@@ -21,6 +21,47 @@ export type Availability = {
   open: boolean;
 };
 
+/** A piece of the hero statement; a part with a layer is set in that layer's colour */
+export type StatementPart = {
+  text: string;
+  layer?: Layer;
+};
+
+/** Text of the hero's stage panel (the stack and its layer cards) */
+export type StageCopy = {
+  /** Mono label before the trace title */
+  trace: string;
+  /** What the request in the trace is doing */
+  title: string;
+  request: string;
+  response: string;
+  /** "Layer" and "of" around the step numbers: "Layer 2 of 4" */
+  layerWord: string;
+  ofWord: string;
+  pause: string;
+  play: string;
+  /** Under the stack, on devices with hover */
+  hint: string;
+};
+
+export type HeroCopy = {
+  /** The line under the name, split so a word can take its layer colour */
+  statement: StatementPart[];
+  seeWork: string;
+  getInTouch: string;
+  /** Quiet links under the buttons; the resume one only shows once the web-safe resume path is set */
+  resumeLabel: string;
+  linkedinLabel: string;
+  githubLabel: string;
+  /** Facts row labels */
+  experienceLabel: string;
+  yearsUnit: string;
+  nowAtLabel: string;
+  latestLabel: string;
+  caseStudy: string;
+  stage: StageCopy;
+};
+
 export type ContactCopy = {
   /** Second part of the status pill, hidden on small screens (after the availability text) */
   statusMore: string;
@@ -73,13 +114,13 @@ export type Photo = {
 export type Site = {
   name: string;
   role: string;
-  /** One plain sentence about what I build (hero) */
-  tagline: string;
+  /** What I am building now, one line (hero) */
+  now: string;
   /** Short bio paragraphs (About) */
   bio: string[];
   /** Plain portrait for the About section */
   photo: Photo;
-  /** City-level only */
+  /** City-level only. Empty until I confirm one; the hero tag is hidden while it is empty */
   location: string;
   availability: Availability;
   links: SiteLinks;
@@ -87,6 +128,8 @@ export type Site = {
   siteUrl: string;
   /** Navbar links, in page order */
   nav: NavItem[];
+  /** Text of the hero that is not data from elsewhere */
+  hero: HeroCopy;
   /** All text of the "Get in touch" section */
   contact: ContactCopy;
   /** What this site is built with, shown as small logos in the footer */
@@ -142,7 +185,9 @@ export type SkillGroup = {
   label: string;
   /** One plain sentence about what I do in this layer */
   summary: string;
-  /** Ordered by importance: the first four also label the hero diagram */
+  /** What this layer does in the hero's request trace ("Loading a cohort dashboard") */
+  requestStep: string;
+  /** Ordered by importance: the first four are named on the hero's layer cards */
   skills: Skill[];
 };
 

@@ -1,27 +1,54 @@
+import { ArrowDown, FileDown } from "lucide-react";
 import { Fragment } from "react";
-import { StackDiagram } from "@/components/StackDiagram";
+import { HeroFacts } from "@/components/HeroFacts";
+import { HeroStage } from "@/components/HeroStage";
+import { HeroState } from "@/components/HeroState";
+import { RoleBlock } from "@/components/RoleBlock";
 import { Button } from "@/components/ui/Button";
+import { GitHubIcon } from "@/components/ui/GitHubIcon";
+import { LinkedInIcon } from "@/components/ui/LinkedInIcon";
 import { site } from "@/data/site";
 import { isTodo } from "@/lib/utils";
 
+/**
+ * "Editorial + request trace". From lg the section is a grid of [gutter] [content half] [stage
+ * half to the page edge]; below lg it stacks, text first. The left column is calm and unboxed;
+ * the stage on the right is a glass panel with the exploded stack.
+ */
 export function Hero() {
-  const { links, availability } = site;
-  const socials = [
-    { label: "LinkedIn", href: links.linkedin },
-    { label: "GitHub", href: links.github },
-  ].filter((social) => !isTodo(social.href));
+  const { links, availability, hero, location } = site;
+  const showLocation = location !== "" && !isTodo(location);
 
   return (
-    <section aria-labelledby="hero-heading" className="section overflow-x-clip">
-      <div className="container-page grid items-center gap-12 lg:grid-cols-5 lg:gap-8">
-        <div className="lg:col-span-3">
-          {/* Split into words and letters so the width axis can animate letter by letter.
-              Each word is its own line, so the animation never changes the height. */}
-          <h1 id="hero-heading" className="type-hero" aria-label={site.name}>
+    <HeroState>
+      <span aria-hidden="true" className="hero-field" />
+
+      <div className="container-page hero-grid">
+        {/* The size container: the name is sized from this column's width, not the viewport */}
+        <div className="hero-text">
+          <div className="hero-in hero-in-status flex flex-wrap items-center gap-x-4 gap-y-2">
+            {availability.open ? (
+              <p className="status-pill">
+                <span aria-hidden="true" className="relative flex size-2">
+                  <span className="absolute inline-flex size-full rounded-full bg-emerald-700 opacity-60 motion-safe:animate-ping dark:bg-emerald-300" />
+                  <span className="relative inline-flex size-2 rounded-full bg-emerald-700 dark:bg-emerald-300" />
+                </span>
+                <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+                  {availability.text}
+                </span>
+              </p>
+            ) : null}
+            {showLocation ? <p className="location-tag">{location}</p> : null}
+          </div>
+
+          <RoleBlock className="hero-in hero-in-role role-line mt-8 short:mt-5" />
+
+          {/* Split into words and letters so the width axis can animate letter by letter */}
+          <h1 id="hero-heading" className="type-hero mt-3 short:mt-2" aria-label={site.name}>
             {site.name.split(" ").map((word, wordIndex) => (
               <Fragment key={`${word}-${wordIndex}`}>
                 {wordIndex > 0 ? " " : null}
-                <span className="name-word block" aria-hidden="true">
+                <span className="name-word block whitespace-nowrap" aria-hidden="true">
                   {[...word].map((letter, letterIndex) => (
                     <span key={letterIndex} className="name-letter">
                       {letter}
@@ -31,32 +58,72 @@ export function Hero() {
               </Fragment>
             ))}
           </h1>
-          <p className="type-h3 mt-4 text-neutral-600 dark:text-neutral-400">{site.role}</p>
-          <p className="type-body mt-6">{site.tagline}</p>
-          {availability.open ? <p className="type-small mt-4">{availability.text}</p> : null}
 
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Button href="#projects">See my work</Button>
-            <Button href="#contact" variant="secondary">
-              Get in touch
-            </Button>
+          <p className="hero-in hero-in-statement type-statement mt-8 short:mt-5">
+            {hero.statement.map((part, index) =>
+              part.layer ? (
+                <span key={index} data-layer={part.layer} className="layer-text">
+                  {part.text}
+                </span>
+              ) : (
+                <Fragment key={index}>{part.text}</Fragment>
+              ),
+            )}
+          </p>
+
+          <p className="hero-in hero-in-now type-body mt-6 text-neutral-600 dark:text-neutral-400 short:mt-3">
+            {site.now}
+          </p>
+
+          <div className="hero-in hero-in-actions mt-8 short:mt-5">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button href="#projects">
+                {hero.seeWork}
+                <ArrowDown aria-hidden="true" className="size-5" />
+              </Button>
+              <Button href="#contact" variant="secondary">
+                {hero.getInTouch}
+              </Button>
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 short:mt-3">
+              {/* Only once site.ts points at a web-safe resume (no phone number or address) */}
+              {!isTodo(links.resume) ? (
+                <a href={links.resume} download className="quiet-link">
+                  <FileDown aria-hidden="true" className="size-5" />
+                  {hero.resumeLabel}
+                </a>
+              ) : null}
+              {!isTodo(links.linkedin) ? (
+                <a
+                  href={links.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="quiet-link"
+                >
+                  <LinkedInIcon outline />
+                  {hero.linkedinLabel}
+                </a>
+              ) : null}
+              {!isTodo(links.github) ? (
+                <a
+                  href={links.github}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="quiet-link"
+                >
+                  <GitHubIcon outline />
+                  {hero.githubLabel}
+                </a>
+              ) : null}
+            </div>
           </div>
 
-          {socials.length > 0 ? (
-            <ul className="mt-8 flex gap-6">
-              {socials.map((social) => (
-                <li key={social.label}>
-                  <a href={social.href} className="link" target="_blank" rel="noopener noreferrer">
-                    {social.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          ) : null}
+          <HeroFacts className="hero-in hero-in-facts facts mt-12 short:mt-6" />
         </div>
 
-        <StackDiagram className="w-full max-w-md lg:col-span-2 lg:justify-self-end" />
+        <HeroStage />
       </div>
-    </section>
+    </HeroState>
   );
 }

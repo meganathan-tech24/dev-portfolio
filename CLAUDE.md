@@ -202,11 +202,82 @@ layer appears (diagram, Stack section, project tags, timeline tech lists).
 - Left-aligned text everywhere; no centred paragraphs
 
 ### Layout and sections
-- Hero: left column has my name (large, expanded Archivo), one plain sentence
-  about what I build, availability line, two buttons and social links. Right
-  column (below on mobile) has `StackDiagram`: an SVG of four stacked layers
-  (Interface, Application, Data, Infrastructure), each labelled with 3-4 of my
-  real technologies. No photo in the hero
+- Hero ("editorial + request trace"): reference prototype
+  `docs/design/hero.html` (copy it there; match its layout and behaviour,
+  rebuilt with Tailwind, the global classes and Motion, no hex codes; the
+  prototype's inline styles are only for the prototype). At least the
+  viewport height minus the header on desktop
+  - Layout from `lg`: a grid of `[gutter] [content half] [stage half to the
+    page edge]`. The left half aligns with `.container-page`; the right half
+    is a "stage" panel that starts at the centre line and bleeds off the right
+    edge of the screen (rounded only on its left corners, no right border).
+    Columns are `min-w-0`; nothing from the left half may cross into the stage.
+    Below `lg` everything stacks: text first, then the stage full width
+  - Left column (calm and editorial, no boxes), top to bottom, spacing on an
+    8px rhythm (32px between groups, 24px inside a group, 48px before the
+    facts):
+    1. Status line: pill with pulsing emerald dot and the availability text,
+       then a small `location` tag in JetBrains Mono (from `site.ts`; omit
+       it until I set it)
+    2. Role label above the name: a mini four-bar layer meter, then
+       "Senior full-stack developer" in JetBrains Mono, then
+       `/ <layer>` in that layer's colour, following the active layer
+       (hidden below `sm`)
+    3. My name (`h1`) on two lines, weight 900, Archivo `wdth` 116, very tight
+       leading. Size comes from the left column, not the viewport: the column
+       is a size container and `.type-hero` uses
+       `font-size: clamp(2.5rem, 12.6cqi, 8rem)` (the one allowed exception to
+       "no clamp()"). Each line `whitespace-nowrap`
+    4. Statement in Source Serif, large (`text-2xl` to `text-3xl`), max about
+       24 characters per line: "I build multi-tenant products end to end,
+       from the interface to the infrastructure." with "interface" in the
+       Interface colour and "infrastructure" in the Infrastructure colour
+    5. One line about now in Source Serif, muted, `max-w-prose`:
+       "Currently building Coheart, a learning platform for cohort-based
+       programmes, with React, Node.js and PostgreSQL on Azure." (from
+       `site.ts`)
+    6. Actions: solid "See my work" (`ArrowDown`) and outline "Get in touch";
+       under them two quiet text links with outline icons: "Resume"
+       (`FileDown`, only when the web-safe `/resume.pdf` exists) and
+       "LinkedIn" (outline `LinkedInIcon`), plus "GitHub" once `site.ts` has it
+    7. Facts row (a `<dl>`, no card): a top rule, then three items separated
+       by thin vertical rules, label in JetBrains Mono, value in Archivo 800:
+       Experience "4+ years" (computed from `experience.ts`) with a small bar
+       of one segment per year; Now at "Teckollab" with the role under it;
+       Latest build "Coheart" with an underlined "Read case study" link.
+       Stacks to one column below `sm`
+  - Right column: the "stage", a glass panel with a 24px blueprint grid:
+    - Top bar: `trace` (mono, muted) + "Loading a cohort dashboard", a
+      Request/Response tag (border in the active layer's colour), "Layer N of
+      4" (mono) and a Pause/Play button (`aria-pressed`) that stops all stage
+      motion. Hidden under reduced motion
+    - Body: on the left the exploded isometric `StackDiagram` (four plates,
+      2D SVG polygons: diamond top with dashed inner diamond, two side faces,
+      layer colour outline; light mode tints the top about 14% and the sides
+      about 38% with a soft coloured shadow under each plate; dark mode dark
+      tops, sides about 18%, glow allowed) with short circuit traces running
+      out of each plate's left corner, inside the panel. On the right a
+      layer card per plate, vertically aligned with it and joined by a dashed
+      connector:
+      - Layer name in its colour and the step number (01 to 04)
+      - One sentence on what that layer does in this request (from
+        `skills.ts`, `requestStep`): "React renders the dashboard",
+        "Express API checks the tenant", "Prisma reads the cohort from
+        PostgreSQL", "Runs on Azure, shipped by GitHub Actions"
+      - All technologies for that layer
+    - Footer: "Hover a layer to explore it" and a small four-colour legend
+    - From `lg` to `xl` the cards move under the stack in a 2x2 grid; below
+      `sm` they become one column; the stage stays full width
+    - Text alternative: the stack is `aria-hidden`; a visually hidden summary
+      lists every layer, its step and technologies (no SVG `<title>`)
+  - Active layer: ONE shared state (a small context or store) drives the
+    request dot, the highlighted plate, the highlighted card, the role label's
+    layer word and meter, "Layer N of 4" and the Request/Response tag. They
+    must never show different layers
+  - Short screens (desktop height under about 860px, e.g. 1366x768): tighter
+    spacing so the whole hero including the facts row fits above the fold
+  - Background: plain page background with one soft, low-opacity colour field
+    behind the stage; no blobs elsewhere in the hero
 - Stack: the same four layers as wide horizontal bands, top to bottom, each with
   a short plain sentence about what I do in that layer and its technologies as
   badges. Each band heading has a lucide icon for the layer (Interface:
@@ -233,31 +304,64 @@ layer appears (diagram, Stack section, project tags, timeline tech lists).
   (width/height set, lazy-loaded, alt text "Meganathan Palanisamy"),
   `rounded-lg`, with the animated layer border (see "Card borders") next to a
   short bio. Path comes from `site.ts` (`photo`), not hardcoded
-- Contact: the one place on the page that asks the visitor to act, so it is
-  the boldest section after the hero. Two columns from `lg`, stacked on mobile
-  - Left column: heading "Get in touch" (`type-h2`), one plain sentence from
-    `site.ts` (for example "I'm open to full-stack roles. Email is the
-    quickest way to reach me."), and the availability line with a small
-    pulsing dot in emerald. No invented promises such as reply times unless I
-    add them to `site.ts`
-  - Right column: a "contact stack" built like the stack diagram, one glass
-    panel with `.border-flow` holding four full-width rows, one per channel,
-    each tied to a layer colour, top to bottom:
-    1. Email (sky): `Mail` icon, label "Email", my address in large Archivo,
-       and two actions on the right: "Copy email" (`Copy` morphs to `Check`,
-       "Copied" announced) and "Send email" (`mailto:`)
-    2. LinkedIn (emerald): `LinkedInIcon`, label, profile handle, opens in a
-       new tab
-    3. GitHub (amber): simple-icons GitHub logo, label, username, new tab.
-       If `site.ts` has no GitHub URL yet, show the row with a `TODO` note in
-       development only and hide it in production
-    4. Resume (fuchsia): `FileDown` icon, label "Resume", "PDF" as the value,
-       downloads `/resume.pdf`
-  - Each row is a single link/button area with a 4px left edge in its layer
-    colour; on hover/focus the row gets its layer tint background, the icon
-    lifts slightly and the edge widens. Rows are separated by thin rules
-  - On mobile the email row stacks its actions under the address so the
-    address never wraps mid-word
+- Contact ("Get in touch"): a full-screen final call to action, not a card or
+  form. Reference prototype: `docs/design/get-in-touch.html` (copy it there;
+  match its layout and behaviour, but rebuild it with Tailwind classes, the
+  global classes and Motion, no hex codes or inline styles)
+  - Section: at least the viewport height on desktop, content in
+    `.container-page`, left-aligned
+  - Background: a faint 48px grid (`neutral` lines at low opacity) that is
+    only visible inside a soft circle around the cursor (CSS mask using
+    `--mx` / `--my` custom properties set on pointer move). No grid on touch
+    devices; a static faded grid instead
+  - Status pill: pulsing emerald dot, "Open to full-stack roles" plus "and
+    freelance projects" (the second part hidden below `sm`), from `site.ts`
+  - Headline (`h2`, the largest type after the hero name, about `text-6xl` to
+    `text-9xl` by breakpoint, weight 900, tight leading): two lines,
+    "Got something" / "to build?", text from `site.ts`
+    - Line 1 animates the Archivo `wdth` axis from 70 to 118 once when the
+      section enters the viewport
+    - Line 2 starts as outline text (`-webkit-text-stroke` in the border
+      colour) and fills with solid text from left to right (`clip-path`
+      inset animation, about 1.2s, after line 1)
+    - After the fill, a small four-colour bar (the layer colours in order)
+      scales in after the question mark
+  - Lede in Source Serif: one or two sentences from `site.ts` saying what I
+    build and inviting an email; max `max-w-prose`
+  - Main row, two columns from `lg` (stacked below):
+    - Email card (wider column), a `button` that copies the email:
+      - Animated four-colour conic border (`.border-flow`, about 6s per turn,
+        2s on hover/focus) and, in dark mode only, a blurred glow of the same
+        gradient underneath
+      - Top line: "Email, the fastest way to reach me" and a "Press C" key hint
+        (hidden on touch devices and below `sm`)
+      - The address in large Archivo (about `text-2xl` to `text-4xl`), the `@`
+        in the Interface colour, with a `<wbr>` before the `@` so it only ever
+        wraps there, never mid-word
+      - Actions: a solid pill "Copy email" (`Copy` icon morphs to `Check`,
+        label becomes "Copied", pill turns emerald for about 2s) and a text
+        link "Open in mail app" (`mailto:`, does not trigger copy)
+      - On desktop with a fine pointer, the card leans up to 14px towards the
+        cursor (magnetic effect, `transform` only) and resets on leave
+    - Side column, three link cards stacked: LinkedIn (emerald), GitHub
+      (amber), Resume (fuchsia). Each: icon tile in its colour tint, small
+      label, value in Archivo, and a round arrow button on the right (down
+      arrow for Resume). Hover/focus: card shifts 6px right, border takes its
+      colour, a radial spotlight in its colour follows the cursor, and the
+      arrow button fills with its colour and rotates -45 degrees
+    - GitHub card is hidden in production until `site.ts` has a GitHub URL
+  - Keyboard shortcut: pressing `C` copies the email while the section is in
+    view, unless focus is in a text field or a modifier key is held
+  - Feedback: a small toast at the bottom centre ("Email copied. Talk soon.")
+    with `role="status"` and `aria-live="polite"`, gone after about 2s
+  - Bottom: thin circuit traces in the four layer colours with travelling
+    pulses (same technique as `CircuitTraces`), then one line "Interface,
+    application, data, infrastructure. Built end to end." and my name
+  - Reduced motion: headline shown fully expanded and filled, no border spin,
+    no pulses, no magnetic lean, no cursor spotlight; copy feedback stays
+  - Light mode: no glow, 700-shade colours, white cards with borders; dark
+    mode: 300/400 shades with glow
+  - All text and links come from `site.ts`
 - Contact and footer must not repeat each other: the footer has no big email,
   no "Looking for..." line and no copy button
 - Header (navbar): "Stack bar"
@@ -374,17 +478,23 @@ The site must feel interactive and alive. Every animation should show the
 decoration.
 
 Hero
-- Name: on load, the letters animate the Archivo width axis from condensed to
-  expanded with a slight stagger (one time, about 800ms)
-- Stack diagram: the four layers drop in and stack top to bottom on load
-- "Request trace": after the layers land, a small glowing dot travels down
-  through the layers (Interface to Infrastructure) and back up, slowly and
-  continuously, with each layer briefly brightening as the dot passes. It
-  pauses when the tab is hidden or the hero is off screen
-- Hovering or focusing a layer in the diagram highlights it and dims the others
-- Circuit traces (replaces the old straight lines): from the right edge of
-  each layer in the stack diagram, circuit-board style traces run towards the
-  page edge, like a PCB:
+- Load sequence (about 2.5s, once): status line, role label and name fade
+  in (the name's letters rise in, about 28ms apart, `wdth` 64 to 116); then
+  the statement, line about now, actions and facts fade in; the stage slides
+  in from the right; the four plates drop onto a closed stack, then separate
+  into the exploded view (about 700ms); then the traces fade in and the
+  request dot starts
+- Request dot: travels down the stack axis (Request) and back up (Response),
+  about 3.4s each way with a short pause at each end. Within a plate it takes
+  that layer's colour and sets the shared active layer. It pauses when the
+  tab is hidden, the hero is off screen or the Pause button is pressed
+- Hovering or focusing a plate or a card overrides the dot: that layer is
+  active, the other plates fade to about 30% and the other cards to about 45%;
+  the active card lifts slightly and takes its layer colour border and tint.
+  Each plate is focusable with a visible focus outline
+- Circuit traces: from the left corner of each plate in the exploded stack,
+  two short circuit-board style traces run towards the left, staying inside
+  the stage panel (the right side is used by the layer cards):
   - Each layer has 2-3 traces in its own colour (sky, emerald, amber,
     fuchsia). Traces run horizontally, bend only at 45 degrees, split and
     re-join a little, and end at different lengths in a small ring "pad"
@@ -746,7 +856,19 @@ for me to say "next". Never start the next step on your own.
 - Step 8.10: Hero circuit traces: replace the straight lines with
   `CircuitTraces` (draw-in, pads, data pulses synced with the request trace,
   hover, responsive and reduced-motion rules)
-- Step 8.11: Full check: both themes at 375px, 768px and 1280px, reduced
+- Step 8.11: "Get in touch" final call to action: rebuild Contact from the
+  "Contact" spec and `docs/design/get-in-touch.html` (headline animation,
+  email card with magnetic lean and copy, link cards with spotlight, `C`
+  shortcut, toast, cursor grid, bottom traces, reduced motion, both themes)
+- Step 8.12: Hero rebuild ("editorial + request trace") from the "Hero" spec
+  and `docs/design/hero.html`: content/stage grid with the stage bleeding to
+  the right edge, editorial left column, facts row, stage with top bar,
+  exploded stack, layer cards and Pause button, one shared active-layer
+  state, short-screen spacing; add `requestStep` to each layer in
+  `skills.ts` and `location`/`now` to `site.ts`; test with the real Archivo
+  font at 1848, 1366x768, 1024, 768 and 390px in both themes and with reduced
+  motion
+- Step 8.13: Full check: both themes at 375px, 768px and 1280px, reduced
   motion, keyboard (including the mobile menu), axe, Lighthouse (mobile
   Performance 90+; if the glass or borders push it lower, tell me which one
   and suggest a lighter setting)

@@ -4,7 +4,34 @@ import { cn } from "@/lib/utils";
  * The LinkedIn mark. simple-icons does not include it, so it is drawn here (24 x 24, in
  * `currentColor`). Decorative: the button or link always has a text label.
  */
-export function LinkedInIcon({ className }: { className?: string }) {
+export function LinkedInIcon({
+  className,
+  outline = false,
+}: {
+  className?: string;
+  outline?: boolean;
+}) {
+  if (outline) {
+    // Outline version (stroke only) for the hero button, to sit next to the other outline controls
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+        focusable="false"
+        className={cn("size-5 shrink-0", className)}
+      >
+        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+        <rect width="4" height="12" x="2" y="9" />
+        <circle cx="4" cy="4" r="2" />
+      </svg>
+    );
+  }
+
   return (
     <svg
       viewBox="0 0 24 24"

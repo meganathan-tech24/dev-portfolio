@@ -3,8 +3,7 @@ import type { Site } from "./types";
 export const site = {
   name: "Meganathan Palanisamy",
   role: "Senior full-stack developer",
-  tagline:
-    "I build multi-tenant web apps and learning platforms with React, Next.js, Node.js and PostgreSQL.",
+  now: "Currently building Coheart, a learning platform for cohort-based programmes, with React, Node.js and PostgreSQL on Azure.",
   bio: [
     "I'm a full-stack developer who builds and ships web applications, from system design through to production.",
     "At Teckollab I work on Coheart, a multi-tenant learning platform: the React and TypeScript front end, the Node.js and Prisma back end, the PostgreSQL data design and the deployment pipeline. Before that I worked at App Innovation Technologies, building MERN-stack applications and mentoring junior developers.",
@@ -19,8 +18,8 @@ export const site = {
     height: 472,
   },
 
-  // TODO: confirm a city-level location to show publicly (see the resume)
-  location: "TODO: confirm city-level location",
+  // TODO: confirm a city-level location to show publicly (see the resume); empty hides the hero tag
+  location: "",
   availability: {
     // TODO: confirm wording (roles, freelance, remote, start date)
     text: "Open to full-stack roles",
@@ -35,8 +34,37 @@ export const site = {
     // with a web-safe version, then set this to "/resume.pdf"
     resume: "TODO: web-safe resume path",
   },
-  // TODO: production URL once there is a domain
-  siteUrl: "TODO: production URL",
+  siteUrl: "https://dev-portfolio-ashy-ten.vercel.app",
+  hero: {
+    statement: [
+      { text: "I build multi-tenant products end to end, from the " },
+      { text: "interface", layer: "interface" },
+      { text: " to the " },
+      { text: "infrastructure", layer: "infrastructure" },
+      { text: "." },
+    ],
+    seeWork: "See my work",
+    getInTouch: "Get in touch",
+    resumeLabel: "Resume",
+    linkedinLabel: "LinkedIn",
+    githubLabel: "GitHub",
+    experienceLabel: "Experience",
+    yearsUnit: "years",
+    nowAtLabel: "Now at",
+    latestLabel: "Latest build",
+    caseStudy: "Read case study",
+    stage: {
+      trace: "trace",
+      title: "Loading a cohort dashboard",
+      request: "Request",
+      response: "Response",
+      layerWord: "Layer",
+      ofWord: "of",
+      pause: "Pause",
+      play: "Play",
+      hint: "Hover a layer to explore it",
+    },
+  },
   contact: {
     statusMore: "and freelance projects",
     headline: "Got something to build?",

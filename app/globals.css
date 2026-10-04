@@ -6,6 +6,9 @@
 /* Class-based dark mode, toggled by next-themes */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Desktop screens shorter than about 860px (e.g. 1366x768): the hero tightens its spacing */
+@custom-variant short (@media (min-width: 64rem) and (max-height: 53.75rem));
+
 @theme inline {
   --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-source-serif), ui-serif, Georgia, serif;
@@ -159,7 +162,7 @@
   /* Light mode uses the lighter 400 shades: the 700 shades darken the page behind dark text
      and failed contrast. Dark mode uses the 300 shades, as everywhere else. */
   .glass-field {
-    @apply size-full rounded-full opacity-15 blur-3xl dark:opacity-15;
+    @apply size-full rounded-full opacity-8 blur-3xl dark:opacity-15;
   }
 
   .glass-field[data-layer="interface"] {
@@ -413,8 +416,14 @@
   }
 
   /* ---- Typography ---- */
+  /* The name is sized from the width of its column (the .hero-text size container), so it
+     always fits its half of the hero. This is the one allowed clamp(): see CLAUDE.md "Hero". */
   .type-hero {
-    @apply font-display text-4xl leading-none font-extrabold tracking-tight font-stretch-expanded sm:text-6xl xl:text-7xl;
+    @apply font-display font-black;
+    font-size: clamp(2.5rem, 12.6cqi, 8rem);
+    line-height: 0.9;
+    letter-spacing: -0.035em;
+    font-stretch: 116%;
   }
 
   .type-h2 {
@@ -509,13 +518,6 @@
     border-color: var(--layer-fg);
   }
 
-  /* SVG shape filled with the layer tint and outlined in the layer colour */
-  .layer-shape {
-    @apply stroke-1;
-    fill: var(--layer-tint);
-    stroke: var(--layer-fg);
-  }
-
   /* ---- Circuit traces (hero) ---- */
   /* Colours per layer: the 600 shades in light mode (clean on white), the 300 shades in dark
      mode where the pulses also get a soft glow. Pulses are brighter than the traces. */
@@ -561,7 +563,7 @@
   .circuit-pulse {
     fill: none;
     stroke: var(--circuit);
-    stroke-width: 1.5;
+    stroke-width: 2;
     stroke-linejoin: round;
   }
 
@@ -574,76 +576,28 @@
     transform-origin: center;
   }
 
-  /* The pulse is one short dash (0.12 of the path) that starts before the path and ends past it.
-     It only exists while motion is allowed. */
+  /* The pulse is one short dash (0.12 of the path) that rests past the end of the path, so it
+     is invisible until the request arrives at the layer (.circuit-pulse-fire, see Load animations) */
   .circuit-pulse {
-    display: none;
     stroke: var(--circuit-pulse);
-    stroke-width: 2;
+    stroke-width: 2.5;
     stroke-linecap: round;
     stroke-dasharray: 0.12 2;
-    stroke-dashoffset: 0.12;
+    stroke-dashoffset: -1;
   }
 
-  :where(.dark, .dark *) .circuit-pulse {
-    filter: drop-shadow(0 0 0.25rem var(--circuit-pulse));
+  /* Dark mode: a soft glow on the layer's traces (light mode stays clean) */
+  :where(.dark, .dark *) .circuit {
+    filter: url(#stack-glow);
   }
 
-  /* Hovering or focusing a diagram layer brightens its traces; the others dim */
-  .stack-trace:has(.diagram-layer:is(:hover, :focus-visible))
-    .circuit:not(.diagram-layer:is(:hover, :focus-visible) ~ .circuit) {
+  /* Hovering or focusing a plate brightens its traces; the others dim */
+  .stack-iso[data-dim="true"] .circuit:not([data-hot="true"]) {
     opacity: 0.3;
   }
 
-  .diagram-layer:is(:hover, :focus-visible) ~ .circuit {
+  .circuit[data-hot="true"] {
     --circuit: var(--circuit-pulse);
-  }
-
-  /* ---- Stack diagram: interaction and request trace ---- */
-  /* A layer of the diagram is a button; hovering or focusing it dims the others */
-  .diagram-layer {
-    @apply relative block w-full cursor-pointer rounded-lg text-left transition-opacity duration-200;
-  }
-
-  .stack-trace:has(.diagram-layer:is(:hover, :focus-visible))
-    .diagram-layer:not(:is(:hover, :focus-visible)) {
-    opacity: 0.45;
-  }
-
-  /* The wrapper is a size container so the trace can travel in container-width units:
-     a layer is 18cqw tall (400 x 72 viewBox) and layers are 0.75rem apart */
-  .stack-trace {
-    @apply relative;
-    container-type: inline-size;
-    --trace-duration: 10s;
-    --trace-delay: 900ms;
-    --trace-interface: var(--color-sky-700);
-    --trace-application: var(--color-emerald-700);
-    --trace-data: var(--color-amber-700);
-    --trace-infrastructure: var(--color-fuchsia-700);
-    @variant dark {
-      --trace-interface: var(--color-sky-300);
-      --trace-application: var(--color-emerald-300);
-      --trace-data: var(--color-amber-300);
-      --trace-infrastructure: var(--color-fuchsia-300);
-    }
-  }
-
-  /* Hidden until motion is allowed: with reduced motion there is no trace at all */
-  .trace-dot {
-    @apply pointer-events-none absolute hidden size-2 rounded-full;
-    top: calc(9cqw - 0.25rem);
-    left: 97.5cqw;
-    margin-left: -0.25rem;
-    background-color: var(--trace-color, var(--trace-interface));
-    box-shadow: 0 0 0.5rem 0.125rem
-      color-mix(in oklab, var(--trace-color, var(--trace-interface)) 55%, transparent);
-  }
-
-  /* Overlay that brightens a layer while the dot passes (opacity only) */
-  .layer-pulse {
-    @apply pointer-events-none absolute inset-0 rounded-lg opacity-0;
-    background-color: var(--layer-fg);
   }
 
   /* Selecting a layer (diagram or legend) */
@@ -788,31 +742,493 @@
     }
   }
 
+  /* ---- Hero ("editorial + request trace") ---- */
+  .hero-shell {
+    @apply relative isolate flex items-center overflow-hidden py-10 lg:py-8 short:py-3;
+  }
+
+  @media (min-width: 64rem) {
+    .hero-shell {
+      min-height: calc(100svh - 4rem);
+    }
+  }
+
+  /* One very soft conic colour field in the layer colours behind the stage */
+  .hero-field {
+    @apply pointer-events-none absolute top-1/2 -right-40 -z-20 hidden size-180 -translate-y-1/2 rounded-full opacity-20 lg:block;
+    background: conic-gradient(
+      from 200deg,
+      var(--color-sky-400),
+      var(--color-emerald-400),
+      var(--color-amber-400),
+      var(--color-fuchsia-400),
+      var(--color-sky-400)
+    );
+    filter: blur(7.5rem);
+  }
+
+  /* Below lg everything stacks inside the page container. From lg the container becomes a grid:
+     [gutter] [content half] [stage half] [gutter]. The two gutters share what the centred 72rem
+     container leaves free, so the content half starts where .container-page's content does
+     (2rem padding) and ends at the centre line; the stage starts at the centre line and its
+     last column is the right gutter, so it bleeds to the screen edge. */
+  .hero-grid {
+    @apply grid items-center gap-10;
+  }
+
+  @media (min-width: 64rem) {
+    .hero-grid {
+      max-width: none;
+      margin: 0;
+      padding: 0;
+      gap: 0;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 36rem) minmax(0, 36rem) minmax(0, 1fr);
+    }
+
+    .hero-text {
+      grid-column: 2;
+      padding-inline: 2rem 3rem;
+    }
+
+    .stage-panel {
+      grid-column: 3 / -1;
+    }
+  }
+
+  /* Size container: the name's font-size comes from this column's width (see .type-hero) */
+  .hero-text {
+    @apply min-w-0;
+    container-type: inline-size;
+  }
+
+  .location-tag {
+    @apply font-mono text-xs text-neutral-600 dark:text-neutral-400;
+  }
+
+  /* Role label: meter, role, and "/ layer" in the active layer's colour */
+  .role-line {
+    @apply flex flex-wrap items-center gap-x-3 gap-y-1;
+  }
+
+  .role-meter {
+    @apply flex flex-col gap-0.5;
+  }
+
+  .role-meter-bar {
+    @apply block h-1 w-6 origin-left scale-x-75 rounded-xs transition duration-300;
+    background-color: color-mix(in oklab, var(--layer-fg) 28%, transparent);
+
+    &[data-on="true"] {
+      @apply scale-x-100;
+      background-color: var(--layer-fg);
+    }
+  }
+
+  :where(.dark, .dark *) .role-meter-bar[data-on="true"] {
+    box-shadow: 0 0 0.75rem -0.125rem var(--layer-fg);
+  }
+
+  .role-title {
+    @apply font-mono text-sm font-semibold text-neutral-900 dark:text-neutral-100;
+  }
+
+  .role-layer {
+    @apply font-mono text-sm text-neutral-600 dark:text-neutral-400;
+
+    & > .layer-text {
+      @apply font-semibold transition-colors duration-300;
+    }
+  }
+
+  /* The statement: large serif, about 24 characters to a line */
+  .type-statement {
+    @apply font-serif text-2xl leading-snug tracking-tight text-neutral-900 dark:text-neutral-100 short:text-xl;
+    max-width: 24ch;
+  }
+
+  @media (min-width: 640px) {
+    .type-statement {
+      @apply text-3xl short:text-2xl;
+    }
+  }
+
+  /* Quiet text links under the buttons */
+  .quiet-link {
+    @apply inline-flex items-center gap-2 border-b-2 border-transparent py-1 font-display text-sm font-semibold text-neutral-600 transition-colors duration-200 hover:border-sky-700 hover:text-neutral-900 dark:text-neutral-400 dark:hover:border-sky-300 dark:hover:text-neutral-100;
+  }
+
+  /* Facts row: a rule, then three items separated by thin vertical rules */
+  .facts {
+    @apply grid gap-4 border-t border-neutral-200 pt-5 dark:border-neutral-700 short:pt-3.5;
+
+    & > div {
+      @apply min-w-0;
+    }
+  }
+
+  @media (min-width: 640px) {
+    .facts {
+      grid-template-columns: repeat(3, auto);
+      justify-content: start;
+      gap: 0;
+    }
+
+    .facts > div {
+      @apply px-7;
+    }
+
+    .facts > div:first-child {
+      @apply pl-0;
+    }
+
+    .facts > div + div {
+      @apply border-l border-neutral-200 dark:border-neutral-700;
+    }
+  }
+
+  /* Three columns in a narrow column (about 1024px): tighter padding between the facts */
+  @media (min-width: 640px) {
+    @container (max-width: 36rem) {
+      .facts > div {
+        @apply px-5;
+      }
+
+      .facts > div:first-child {
+        @apply pl-0;
+      }
+    }
+  }
+
+  .fact-key {
+    @apply font-mono text-xs text-neutral-600 dark:text-neutral-400;
+  }
+
+  .facts dd {
+    @apply mt-1.5 flex flex-col gap-1.5;
+  }
+
+  .fact-value {
+    @apply font-display text-lg leading-tight font-extrabold tracking-tight text-neutral-900 dark:text-neutral-100 short:text-base;
+  }
+
+  .fact-note {
+    @apply text-sm text-neutral-600 dark:text-neutral-400;
+  }
+
+  .fact-link {
+    @apply flex flex-col gap-1.5 rounded-xs;
+  }
+
+  .fact-underline {
+    @apply font-semibold text-neutral-900 underline decoration-neutral-400 decoration-2 underline-offset-4 transition-colors duration-200 dark:text-neutral-100 dark:decoration-neutral-500;
+  }
+
+  .fact-link:is(:hover, :focus-visible) .fact-underline {
+    @apply decoration-sky-700 dark:decoration-sky-300;
+  }
+
+  .year-bars {
+    @apply flex gap-0.5;
+  }
+
+  .year-bar {
+    @apply block h-1.5 w-4 rounded-xs bg-neutral-900 dark:bg-neutral-100;
+  }
+
+  /* ---- The stage (right half of the hero) ---- */
+  /* Combine with .glass. A 24px blueprint grid; from lg it starts at the centre line and bleeds
+     off the right edge, so only its left corners are round and it has no right border. */
+  .stage-panel {
+    @apply relative flex min-w-0 flex-col overflow-hidden rounded-3xl;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 1.5rem 1.5rem;
+  }
+
+  @media (min-width: 64rem) {
+    .stage-panel {
+      @apply rounded-r-none border-r-0;
+      min-height: min(42.5rem, calc(100svh - 8.75rem));
+    }
+  }
+
+  .stage-bar {
+    @apply flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-neutral-200 bg-white/50 px-5 py-3 text-sm dark:border-neutral-700 dark:bg-neutral-900/50;
+  }
+
+  .stage-title {
+    @apply font-display font-bold text-neutral-900 dark:text-neutral-100;
+    font-stretch: 106%;
+  }
+
+  .stage-trace {
+    @apply font-mono text-xs font-normal text-neutral-600 dark:text-neutral-400;
+  }
+
+  /* Request or Response: its border takes the active layer's colour (data-layer) */
+  .stage-phase {
+    @apply rounded-full border px-2.5 py-0.5 font-mono text-xs font-semibold text-neutral-900 transition-colors duration-300 dark:text-neutral-100;
+    border-color: var(--layer-fg);
+  }
+
+  .stage-steps {
+    @apply font-mono text-xs text-neutral-600 sm:ml-auto dark:text-neutral-400;
+  }
+
+  .stage-toggle {
+    @apply inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-neutral-300 bg-white/70 px-2.5 py-1 font-display text-xs font-semibold text-neutral-900 transition-colors duration-200 hover:bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-900/50 dark:text-neutral-100 dark:hover:bg-neutral-800;
+  }
+
+  /* One column up to xl (stack, then the cards in a grid); from xl the cards sit beside the
+     stack, level with their plates */
+  .stage-body {
+    @apply relative grid flex-1 items-center gap-2 pt-3;
+  }
+
+  .stage-body > .stack-iso {
+    @apply mx-auto max-w-xs;
+  }
+
+  .stage-cards {
+    @apply grid gap-2 px-4 pb-1 sm:grid-cols-2;
+  }
+
+  @media (min-width: 80rem) {
+    .stage-body {
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+      padding-left: 0.5rem;
+    }
+
+    .stage-body > .stack-iso {
+      @apply max-w-none;
+    }
+
+    .stage-cards {
+      @apply relative block self-stretch p-0;
+    }
+  }
+
+  /* One layer card: name in the layer colour, the step, one sentence, the technologies */
+  .layer-card {
+    @apply relative flex w-full cursor-pointer flex-col rounded-lg border border-neutral-200 bg-white/70 py-3 pr-3.5 pl-4 text-left transition duration-300 dark:border-neutral-700 dark:bg-neutral-900/60;
+
+    /* the layer's accent bar */
+    &::after {
+      @apply absolute top-3 bottom-3 left-0 w-0.5 rounded-r-xs;
+      content: "";
+      background-color: var(--layer-fg);
+    }
+
+    &[data-on="true"] {
+      @apply shadow-lg;
+      border-color: var(--layer-fg);
+      background-color: color-mix(in oklab, var(--layer-fg) 12%, var(--color-white));
+    }
+  }
+
+  :where(.dark, .dark *) .layer-card[data-on="true"] {
+    background-color: color-mix(in oklab, var(--layer-fg) 14%, var(--color-neutral-900));
+  }
+
+  @media (min-width: 80rem) {
+    .layer-card {
+      @apply absolute right-6 left-0;
+      translate: 0 -50%;
+
+      /* the dashed connector to the plate */
+      &::before {
+        @apply absolute top-1/2 -left-6 w-6 border-t-2 border-dashed;
+        content: "";
+        border-color: color-mix(in oklab, var(--layer-fg) 70%, transparent);
+      }
+    }
+  }
+
+  @media (min-width: 80rem) and (prefers-reduced-motion: no-preference) {
+    .layer-card[data-on="true"] {
+      translate: -0.375rem -50%;
+    }
+  }
+
+  @media (max-width: 79.99rem) and (prefers-reduced-motion: no-preference) {
+    .layer-card[data-on="true"] {
+      @apply -translate-y-0.5;
+    }
+  }
+
+  /* While a plate or card is hovered or focused, the other cards fade */
+  .stage-panel[data-dim="true"] .layer-card:not([data-on="true"]) {
+    @apply opacity-45;
+  }
+
+  .layer-card-name {
+    @apply flex items-center gap-2 font-display text-base font-bold;
+    color: var(--layer-fg);
+    font-stretch: 108%;
+  }
+
+  .layer-card-step {
+    @apply ml-auto font-mono text-xs font-semibold text-neutral-600 dark:text-neutral-400;
+  }
+
+  .layer-card[data-on="true"] .layer-card-step {
+    color: var(--layer-fg);
+  }
+
+  .layer-card-sentence {
+    @apply mt-1 font-display text-sm font-semibold text-neutral-900 dark:text-neutral-100;
+  }
+
+  .layer-card-tech {
+    @apply mt-0.5 text-xs text-neutral-700 dark:text-neutral-300;
+  }
+
+  .stage-foot {
+    @apply flex items-center justify-between gap-3 px-5 pt-2 pb-4 text-sm text-neutral-700 dark:text-neutral-300;
+  }
+
+  /* The hint is for a mouse; touch screens just tap */
+  .stage-hint {
+    @apply hidden;
+  }
+
+  @media (hover: hover) {
+    .stage-hint {
+      display: block;
+    }
+  }
+
+  .stage-legend {
+    @apply ml-auto flex gap-1.5;
+
+    & > * {
+      @apply block h-1 w-4.5 rounded-full;
+    }
+  }
+
+  /* ---- Exploded stack (hero) ---- */
+  .stack-iso {
+    @apply block h-auto w-full overflow-visible;
+    --plate-panel: var(--color-white);
+    --plate-side: var(--color-neutral-200);
+    --plate-side-right: var(--color-neutral-300);
+    --top-mix: 14%;
+    --side-mix: 38%;
+    --shadow-opacity: 0.35;
+    @variant dark {
+      --plate-panel: var(--color-neutral-900);
+      --plate-side: var(--color-neutral-800);
+      --plate-side-right: var(--color-neutral-900);
+      --top-mix: 0%;
+      --side-mix: 18%;
+      --shadow-opacity: 0;
+    }
+  }
+
+  .stack-plate {
+    @apply transition-opacity duration-300;
+  }
+
+  .stack-iso[data-dim="true"] .stack-plate:not([data-hot="true"]) {
+    @apply opacity-30;
+  }
+
+  .plate-top {
+    @apply stroke-2 transition-colors duration-300;
+    fill: color-mix(in oklab, var(--layer-fg) var(--top-mix), var(--plate-panel));
+    stroke: var(--layer-fg);
+  }
+
+  /* The plate of the active layer gets a stronger tint */
+  .stack-plate[data-tint="true"] .plate-top {
+    fill: color-mix(in oklab, var(--layer-fg) 26%, var(--plate-panel));
+  }
+
+  :where(.dark, .dark *) .stack-plate[data-tint="true"] .plate-top {
+    fill: color-mix(in oklab, var(--layer-fg) 38%, var(--plate-panel));
+    stroke: color-mix(in oklab, var(--layer-fg) 55%, white);
+    stroke-width: 3;
+  }
+
+  .plate-side {
+    fill: color-mix(in oklab, var(--layer-fg) var(--side-mix), var(--plate-side));
+  }
+
+  .plate-side-right {
+    fill: color-mix(in oklab, var(--layer-fg) var(--side-mix), var(--plate-side-right));
+  }
+
+  .plate-shadow {
+    fill: var(--layer-fg);
+    opacity: var(--shadow-opacity);
+  }
+
+  .plate-inner {
+    @apply fill-none;
+    stroke: var(--layer-fg);
+    stroke-opacity: 0.4;
+    stroke-dasharray: 3 5;
+  }
+
+  .plate-node {
+    fill: var(--layer-fg);
+  }
+
+  .stack-axis {
+    @apply stroke-neutral-200 dark:stroke-neutral-700;
+    stroke-width: 1.5;
+    stroke-dasharray: 2 5;
+  }
+
+  .stack-dot {
+    fill: var(--layer-fg, var(--color-sky-700));
+  }
+
+  :where(.dark, .dark *) .stack-glow {
+    filter: url(#stack-glow);
+  }
+
+  /* Invisible areas that take hover, focus and clicks; the outline shows on keyboard focus */
+  .plate-hit {
+    @apply cursor-pointer outline-none;
+
+    & > * {
+      fill: transparent;
+    }
+
+    &:focus-visible > polygon {
+      stroke: var(--layer-fg);
+      stroke-width: 4;
+    }
+  }
+
   /* ---- Contact: "Get in touch" ---- */
   /* The stage is the whole section. ContactStage sets data-in (once, when it enters the
      viewport) and data-active (while it is on screen), and --mx / --my from the mouse. */
   .contact-stage {
     @apply relative isolate flex flex-col justify-center overflow-hidden py-16 sm:py-20 lg:py-24;
+  }
 
-    /* A faint 48px grid, only visible in a soft circle around the cursor */
-    &::before {
-      @apply absolute inset-0 -z-10;
-      content: "";
-      background-image:
-        linear-gradient(var(--grid-line) 1px, transparent 1px),
-        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-      background-size: 3rem 3rem;
-      mask-image: radial-gradient(
-        26rem circle at var(--mx, 50%) var(--my, 40%),
-        black 0%,
-        transparent 70%
-      );
-    }
+  /* A faint 48px grid, only visible in a soft circle around the cursor (--mx / --my are set
+     on pointer move). Used by the hero and the Contact section. */
+  .cursor-grid::before {
+    @apply absolute inset-0 -z-10;
+    content: "";
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 3rem 3rem;
+    mask-image: radial-gradient(
+      26rem circle at var(--mx, 50%) var(--my, 40%),
+      black 0%,
+      transparent 70%
+    );
   }
 
   /* Touch devices have no cursor: a static grid that fades out towards the bottom */
   @media (pointer: coarse) {
-    .contact-stage::before {
+    .cursor-grid::before {
       mask-image: linear-gradient(black, transparent 80%);
     }
   }
@@ -830,7 +1246,7 @@
     @apply font-display text-3xl leading-none font-black tracking-tighter xs:text-4xl sm:text-5xl lg:text-6xl;
   }
 
-  .contact-status {
+  .status-pill {
     @apply inline-flex items-center gap-3 rounded-full border border-neutral-200 bg-white py-2 pr-4 pl-3 font-display text-sm text-neutral-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400;
   }
 
@@ -1319,11 +1735,8 @@
   }
 }
 
-/* Circuit traces: draw outwards, pads pop in, pulses travel along the primary trace.
-   A pulse takes 12% of the 10s request-trace loop and starts when the dot reaches the layer
-   (0, 16.67, 33.33 and 50%, and again on the way up), so the hero moves as one system.
-   Extra pulses fill the quiet stretches. Between events the dash rests past the path end;
-   the 0.01% steps make the jump back to the start invisible. */
+/* Circuit traces: draw outwards, pads pop in, a pulse runs along the primary trace each time
+   the request dot arrives at the layer. The pulse rests past the end of the path (offset -1). */
 @keyframes circuit-draw {
   from {
     stroke-dashoffset: 1;
@@ -1336,112 +1749,20 @@
   }
 }
 
-@keyframes circuit-appear {
+@keyframes circuit-pulse-once {
   from {
-    opacity: 0;
-  }
-}
-
-@keyframes circuit-pulse-1 {
-  0% {
     stroke-dashoffset: 0.12;
-  }
-
-  12%,
-  44.99% {
-    stroke-dashoffset: -1;
-  }
-
-  45% {
-    stroke-dashoffset: 0.12;
-  }
-
-  57%,
-  100% {
-    stroke-dashoffset: -1;
-  }
-}
-
-@keyframes circuit-pulse-2 {
-  0%,
-  16.66% {
-    stroke-dashoffset: 0.12;
-  }
-
-  28.67%,
-  83.32% {
-    stroke-dashoffset: -1;
-  }
-
-  83.33% {
-    stroke-dashoffset: 0.12;
-  }
-
-  95.33%,
-  100% {
-    stroke-dashoffset: -1;
-  }
-}
-
-@keyframes circuit-pulse-3 {
-  0%,
-  33.32% {
-    stroke-dashoffset: 0.12;
-  }
-
-  45.33%,
-  66.66% {
-    stroke-dashoffset: -1;
-  }
-
-  66.67% {
-    stroke-dashoffset: 0.12;
-  }
-
-  78.67%,
-  100% {
-    stroke-dashoffset: -1;
-  }
-}
-
-@keyframes circuit-pulse-4 {
-  0%,
-  11.99% {
-    stroke-dashoffset: 0.12;
-  }
-
-  24%,
-  49.99% {
-    stroke-dashoffset: -1;
-  }
-
-  50% {
-    stroke-dashoffset: 0.12;
-  }
-
-  62%,
-  87.99% {
-    stroke-dashoffset: -1;
-  }
-
-  88%,
-  88.01% {
-    stroke-dashoffset: 0.12;
-  }
-
-  100% {
-    stroke-dashoffset: -1;
   }
 }
 
 /* Faster, continuous pulses while a layer is hovered or focused */
 @keyframes circuit-pulse-hover {
-  0% {
+  from {
     stroke-dashoffset: 0.12;
   }
 
   60%,
-  100% {
+  to {
     stroke-dashoffset: -1;
   }
 }
@@ -1479,125 +1800,41 @@
   }
 }
 
-/* The hero name goes from the condensed to the expanded end of Archivo's width axis */
-@keyframes expand-width {
+/* Each letter of the hero name rises while the width axis goes from 64 to 116 */
+@keyframes name-in {
   from {
-    font-stretch: 62%;
+    font-stretch: 64%;
+    opacity: 0;
+    transform: translateY(0.25em);
   }
 }
 
-/* The request trace: the dot hops down through the layers and back up (10s loop).
-   Layers sit at 0, 16.67, 33.33 and 50% of the loop on the way down, then again on the way up. */
-@keyframes trace-appear {
+@keyframes hero-in {
   from {
     opacity: 0;
+    transform: translateY(0.5rem);
   }
 }
 
-@keyframes trace-move {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-
-  16.67%,
-  83.33% {
-    transform: translateY(calc(18cqw + 0.75rem));
-  }
-
-  33.33%,
-  66.67% {
-    transform: translateY(calc(2 * (18cqw + 0.75rem)));
-  }
-
-  50% {
-    transform: translateY(calc(3 * (18cqw + 0.75rem)));
-  }
-}
-
-/* The dot takes the colour of the layer it is in; the switch happens between layers */
-@keyframes trace-color {
-  0%,
-  7.5%,
-  92.5%,
-  100% {
-    --trace-color: var(--trace-interface);
-  }
-
-  9.2%,
-  24.2%,
-  75.8%,
-  90.8% {
-    --trace-color: var(--trace-application);
-  }
-
-  25.8%,
-  40.8%,
-  59.2%,
-  74.2% {
-    --trace-color: var(--trace-data);
-  }
-
-  42.5%,
-  57.5% {
-    --trace-color: var(--trace-infrastructure);
-  }
-}
-
-@keyframes trace-pulse-1 {
-  0%,
-  100% {
-    opacity: 0.14;
-  }
-
-  5%,
-  95% {
+/* Plates: drop onto a closed stack, then separate into the exploded view.
+   --sep is how far a plate is from its exploded position while the stack is closed. */
+@keyframes plate-drop {
+  from {
     opacity: 0;
+    transform: translateY(-260px);
   }
 }
 
-@keyframes trace-pulse-2 {
-  0%,
-  11.67%,
-  21.67%,
-  78.33%,
-  88.33%,
-  100% {
-    opacity: 0;
-  }
-
-  16.67%,
-  83.33% {
-    opacity: 0.14;
+@keyframes plate-sep {
+  from {
+    transform: translateY(var(--sep));
   }
 }
 
-@keyframes trace-pulse-3 {
-  0%,
-  28.33%,
-  38.33%,
-  61.67%,
-  71.67%,
-  100% {
+@keyframes stage-in {
+  from {
     opacity: 0;
-  }
-
-  33.33%,
-  66.67% {
-    opacity: 0.14;
-  }
-}
-
-@keyframes trace-pulse-4 {
-  0%,
-  45%,
-  55%,
-  100% {
-    opacity: 0;
-  }
-
-  50% {
-    opacity: 0.14;
+    transform: translateX(1.5rem);
   }
 }
 
@@ -1612,7 +1849,7 @@
       outline: 1px solid var(--layer-fg);
     }
 
-    & .diagram-layer:not([data-layer="interface"]) {
+    & :is(.stack-plate, .layer-card):not([data-layer="interface"]) {
       opacity: 0.45;
     }
   }
@@ -1626,7 +1863,7 @@
       outline: 1px solid var(--layer-fg);
     }
 
-    & .diagram-layer:not([data-layer="application"]) {
+    & :is(.stack-plate, .layer-card):not([data-layer="application"]) {
       opacity: 0.45;
     }
   }
@@ -1640,7 +1877,7 @@
       outline: 1px solid var(--layer-fg);
     }
 
-    & .diagram-layer:not([data-layer="data"]) {
+    & :is(.stack-plate, .layer-card):not([data-layer="data"]) {
       opacity: 0.45;
     }
   }
@@ -1654,7 +1891,7 @@
       outline: 1px solid var(--layer-fg);
     }
 
-    & .diagram-layer:not([data-layer="infrastructure"]) {
+    & :is(.stack-plate, .layer-card):not([data-layer="infrastructure"]) {
       opacity: 0.45;
     }
   }
@@ -1874,79 +2111,35 @@
       animation-delay: calc(var(--load-step, 0) * 100ms);
     }
 
-    /* Traces draw outwards layer by layer after the layers have landed; the pads pop in at the end */
+    /* Traces draw outwards layer by layer once the plates have separated; the pads pop in after */
     .circuit-trace {
-      animation: circuit-draw 700ms ease-out backwards;
-      animation-delay: calc(700ms + var(--load-step, 0) * 200ms);
+      animation: circuit-draw 600ms ease-out backwards;
+      animation-delay: calc(2000ms + var(--load-step, 0) * 150ms);
     }
 
     .circuit-pad {
       animation: circuit-pop 250ms ease-out backwards;
-      animation-delay: calc(1350ms + var(--load-step, 0) * 200ms);
+      animation-delay: calc(2550ms + var(--load-step, 0) * 150ms);
     }
 
-    /* Pulses share the request trace's loop and start (10s, --trace-delay) so they stay in sync
-       with the dot, and stay hidden until the traces have been drawn */
-    .circuit-pulse {
-      display: inline;
-      animation:
-        circuit-appear 300ms linear 2300ms backwards,
-        var(--pulse, circuit-pulse-1) var(--trace-duration) linear var(--trace-delay) infinite;
+    /* HeroState re-keys the pulse each time the request arrives, which restarts this */
+    .circuit-pulse-fire {
+      animation: circuit-pulse-once 900ms linear;
     }
 
-    .circuit-pulse-1 {
-      --pulse: circuit-pulse-1;
-    }
-
-    .circuit-pulse-2 {
-      --pulse: circuit-pulse-2;
-    }
-
-    .circuit-pulse-3 {
-      --pulse: circuit-pulse-3;
-    }
-
-    .circuit-pulse-4 {
-      --pulse: circuit-pulse-4;
-    }
-
-    .diagram-layer:is(:hover, :focus-visible) ~ .circuit .circuit-pulse {
+    .circuit[data-hot="true"] .circuit-pulse {
       animation: circuit-pulse-hover 1.4s linear infinite;
     }
 
-    .trace-dot {
-      display: block;
-      animation:
-        trace-appear 400ms ease-out var(--trace-delay) backwards,
-        trace-move var(--trace-duration) ease-in-out var(--trace-delay) infinite backwards,
-        trace-color var(--trace-duration) linear var(--trace-delay) infinite backwards;
-    }
-
-    .layer-pulse {
-      animation-duration: var(--trace-duration);
-      animation-delay: var(--trace-delay);
-      animation-timing-function: linear;
-      animation-iteration-count: infinite;
-    }
-
-    .trace-pulse-1 {
-      animation-name: trace-pulse-1;
-    }
-
-    .trace-pulse-2 {
-      animation-name: trace-pulse-2;
-    }
-
-    .trace-pulse-3 {
-      animation-name: trace-pulse-3;
-    }
-
-    .trace-pulse-4 {
-      animation-name: trace-pulse-4;
-    }
-
-    /* Paused by TraceController while the tab is hidden or the diagram is off screen */
-    [data-trace="paused"] :is(.trace-dot, .layer-pulse, .circuit-pulse) {
+    /* Everything in the hero stands still while it is off screen or the tab is hidden
+       (HeroState sets data-trace), and in the stage while Pause is pressed */
+    .hero-shell[data-trace="paused"],
+    .hero-shell[data-trace="paused"] *,
+    .hero-shell[data-trace="paused"] *::before,
+    .hero-shell[data-trace="paused"] *::after,
+    .stage-panel[data-paused] *,
+    .stage-panel[data-paused] *::before,
+    .stage-panel[data-paused] *::after {
       animation-play-state: paused;
     }
 
@@ -1965,9 +2158,91 @@
       animation: pipe-light 2.2s ease-out both;
     }
 
+    /* Letters rise one by one (28ms apart across both words) while the width axis opens up */
     .name-letter {
-      animation: expand-width 560ms ease-out backwards;
-      animation-delay: calc((var(--word, 0) * 6 + var(--letter, 0)) * 30ms);
+      animation: name-in 1s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+      animation-delay: calc((var(--word, 0) * 10 + var(--letter, 0)) * 28ms);
+    }
+
+    /* Status line and role label come in with the name; the rest of the left column follows it */
+    .hero-in {
+      animation: hero-in 600ms ease-out backwards;
+    }
+
+    .hero-in-status {
+      animation-delay: 0ms;
+    }
+
+    .hero-in-role {
+      animation-delay: 100ms;
+    }
+
+    .hero-in-statement {
+      animation-delay: 700ms;
+    }
+
+    .hero-in-now {
+      animation-delay: 850ms;
+    }
+
+    .hero-in-actions {
+      animation-delay: 1000ms;
+    }
+
+    .hero-in-facts {
+      animation-delay: 1150ms;
+    }
+
+    /* The stage slides in from the right, then the plates drop onto a closed stack and separate */
+    .hero-in-stage {
+      animation: stage-in 800ms cubic-bezier(0.2, 0.8, 0.2, 1) 200ms backwards;
+    }
+
+    .plate-drop {
+      animation: plate-drop 700ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+    }
+
+    .plate-sep {
+      animation: plate-sep 700ms cubic-bezier(0.2, 0.8, 0.2, 1) 1300ms backwards;
+    }
+
+    .plate-drop-0 {
+      animation-delay: 250ms;
+    }
+
+    .plate-drop-1 {
+      animation-delay: 370ms;
+    }
+
+    .plate-drop-2 {
+      animation-delay: 490ms;
+    }
+
+    .plate-drop-3 {
+      animation-delay: 610ms;
+    }
+
+    /* How far each plate is from its exploded place while the stack is closed */
+    .plate-sep-0 {
+      --sep: 140px;
+    }
+
+    .plate-sep-1 {
+      --sep: 42px;
+    }
+
+    .plate-sep-2 {
+      --sep: -56px;
+    }
+
+    .plate-sep-3 {
+      --sep: -154px;
+    }
+
+    /* The layer cards appear one after another, top to bottom, as the stack separates */
+    .layer-card {
+      animation: hero-in 600ms ease-out backwards;
+      animation-delay: calc(1500ms + var(--load-step, 0) * 120ms);
     }
   }
 }

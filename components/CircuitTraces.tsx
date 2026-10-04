@@ -3,84 +3,113 @@ import type { Layer } from "@/data/types";
 import { cn } from "@/lib/utils";
 
 /**
- * PCB-style traces that run from the right edge of one stack-diagram layer towards the page
- * edge. Hand-written paths on a 384 x 84 grid (one layer plus half the gap above and below),
- * so traces of different layers can never cross. Every path uses `pathLength="1"`, which
- * makes the draw-in and the data pulses plain `stroke-dashoffset` animations (see
- * `.circuit-*` in globals.css). Paths bend only at 45 degrees.
+ * PCB-style traces that leave the left corner of each plate of the exploded stack and run
+ * towards the left, staying inside the stage (the layer cards use the right side). SVG
+ * fragments in the stack's own coordinates, so they are drawn inside `StackDiagram`.
  *
- * - `primary`: the trace that also carries the data pulses (kept at 4 duplicate paths in all)
- * - `extra`: more traces, shown from `lg` (tablets keep one trace per layer)
+ * Every path uses `pathLength="1"`, which makes the draw-in and the data pulses plain
+ * `stroke-dashoffset` animations (see `.circuit-*` in globals.css). Paths run horizontally and
+ * bend only at 45 degrees. Each layer stays inside its own band of 120 units, so traces of
+ * different layers cannot cross.
+ *
+ * - `primary`: starts at the plate's left corner (x = 44); the pulse travels along a copy of it
+ * - `secondary`: starts on the plate's lower left edge and ends at a different length
+ * - `split`: leaves the primary trace and joins it again a little further on
  * - pads are open circles at the end of a trace
+ *
+ * `y` is the plate's centre. All coordinates are relative to it and shifted with a transform.
  */
-type Trace = { d: string; pad?: { x: number; y: number } };
+type Pad = { x: number; y: number };
+type Trace = { primary: string; secondary: string; split?: string; pads: Pad[] };
 
-const TRACES: Record<Layer, { primary: Trace; extra: Trace[] }> = {
+const TRACES: Record<Layer, Trace> = {
   interface: {
-    primary: { d: "M0 42H64L84 22H176L196 42H292", pad: { x: 296, y: 42 } },
-    extra: [{ d: "M0 52H50L70 72H150L166 56H236", pad: { x: 240, y: 56 } }],
+    primary: "M44 0H32L16 -16H-24",
+    secondary: "M66 11H40L24 27H-6",
+    pads: [
+      { x: -28, y: -16 },
+      { x: -10, y: 27 },
+    ],
   },
   application: {
-    primary: { d: "M0 42H150L166 58H240L256 42H340", pad: { x: 344, y: 42 } },
-    // splits off the primary trace and joins it again a little further on
-    extra: [{ d: "M40 42L56 26H126L142 42" }],
+    primary: "M44 0H-30",
+    secondary: "M66 11H38L24 25H-14",
+    split: "M26 0L14 -12H-4L-16 0",
+    pads: [
+      { x: -34, y: 0 },
+      { x: -18, y: 25 },
+    ],
   },
   data: {
-    primary: { d: "M0 42H48L68 62H160L176 46H250L270 26H316", pad: { x: 320, y: 26 } },
-    extra: [{ d: "M0 30H90L104 16H210", pad: { x: 214, y: 16 } }],
+    primary: "M44 0H30L14 16H-20",
+    secondary: "M66 11H48L34 -3H-8L-20 -15",
+    pads: [
+      { x: -24, y: 16 },
+      { x: -22, y: -17 },
+    ],
   },
   infrastructure: {
-    primary: { d: "M0 42H110L126 26H200L216 42H284L300 58H350", pad: { x: 354, y: 58 } },
-    extra: [{ d: "M0 54H70L82 66H180", pad: { x: 184, y: 66 } }],
+    primary: "M44 0H28L12 -16H-12",
+    secondary: "M66 11H34L18 27H-22",
+    pads: [
+      { x: -16, y: -16 },
+      { x: -26, y: 27 },
+    ],
   },
 };
 
-const PULSE_CLASS: Record<Layer, string> = {
-  interface: "circuit-pulse-1",
-  application: "circuit-pulse-2",
-  data: "circuit-pulse-3",
-  infrastructure: "circuit-pulse-4",
+const LAYERS = Object.keys(TRACES) as Layer[];
+
+type Props = {
+  /** Plate centres, y, in the stack's coordinates */
+  centres: number[];
+  /** Layer being hovered or focused, or -1 */
+  hover: number;
+  /** Per layer, how many times the request has arrived (a new value restarts the pulse) */
+  pulses: number[];
 };
 
-type CircuitTracesProps = {
-  layer: Layer;
-  /** Position of the layer in the diagram (0 = top): the traces are drawn layer by layer */
-  step: number;
-};
-
-/** Decorative: the same layers are already listed in text next to the diagram */
-export function CircuitTraces({ layer, step }: CircuitTracesProps) {
-  const { primary, extra } = TRACES[layer];
-  const pads = [primary, ...extra].flatMap((trace) =>
-    trace.pad ? [{ ...trace.pad, extra: trace !== primary }] : [],
-  );
-
+/** Decorative: the same layers are already described in text next to the stack */
+export function CircuitTraces({ centres, hover, pulses }: Props) {
   return (
-    <svg
-      viewBox="0 0 384 84"
-      aria-hidden="true"
-      focusable="false"
-      data-layer={layer}
-      className={cn(
-        "circuit pointer-events-none absolute top-1/2 left-full hidden h-21 w-96 -translate-y-1/2 md:block",
-        loadStep(step),
-      )}
-    >
-      <path className="circuit-trace" pathLength={1} d={primary.d} />
-      {extra.map((trace) => (
-        <path key={trace.d} className="circuit-trace max-lg:hidden" pathLength={1} d={trace.d} />
-      ))}
-      {pads.map((pad) => (
-        <circle
-          key={`${pad.x}-${pad.y}`}
-          className={cn("circuit-pad", pad.extra && "max-lg:hidden")}
-          cx={pad.x}
-          cy={pad.y}
-          r={4}
-        />
-      ))}
-      {/* A short bright segment that travels along the primary trace */}
-      <path className={cn("circuit-pulse", PULSE_CLASS[layer])} pathLength={1} d={primary.d} />
-    </svg>
+    <g aria-hidden="true" className="max-md:hidden">
+      {LAYERS.map((layer, step) => {
+        const { primary, secondary, split, pads } = TRACES[layer];
+
+        return (
+          <g
+            key={layer}
+            data-layer={layer}
+            data-hot={hover === step}
+            transform={`translate(0 ${centres[step]})`}
+            className={cn("circuit", loadStep(step))}
+          >
+            <path className="circuit-trace" pathLength={1} d={primary} />
+            {/* Tablets keep one trace per layer */}
+            <path className="circuit-trace max-lg:hidden" pathLength={1} d={secondary} />
+            {split ? (
+              <path className="circuit-trace max-lg:hidden" pathLength={1} d={split} />
+            ) : null}
+            {pads.map((pad, index) => (
+              <circle
+                key={`${pad.x}-${pad.y}`}
+                className={cn("circuit-pad", index > 0 && "max-lg:hidden")}
+                cx={pad.x}
+                cy={pad.y}
+                r={5}
+              />
+            ))}
+            {/* A short bright segment that travels along the primary trace each time the
+                request arrives at this layer (and keeps going while the layer is hovered) */}
+            <path
+              key={pulses[step]}
+              className={cn("circuit-pulse", pulses[step] > 0 && "circuit-pulse-fire")}
+              pathLength={1}
+              d={primary}
+            />
+          </g>
+        );
+      })}
+    </g>
   );
 }

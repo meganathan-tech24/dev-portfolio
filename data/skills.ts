@@ -8,6 +8,7 @@ export const skillGroups = [
   {
     layer: "interface",
     label: "Interface",
+    requestStep: "React renders the dashboard",
     summary:
       "I build React and Next.js interfaces in TypeScript, with server rendering and SEO work where search matters.",
     skills: [
@@ -23,6 +24,7 @@ export const skillGroups = [
   {
     layer: "application",
     label: "Application",
+    requestStep: "Express API checks the tenant",
     summary:
       "I write Node.js and Express APIs with Prisma, and connect them to services such as Mux, Zoom and OpenAI.",
     skills: [
@@ -43,6 +45,7 @@ export const skillGroups = [
   {
     layer: "data",
     label: "Data",
+    requestStep: "Prisma reads the cohort from PostgreSQL",
     summary:
       "I design PostgreSQL schemas, including tenant isolation for multi-tenant apps, and use Redis for caching and queues.",
     skills: [
@@ -56,6 +59,7 @@ export const skillGroups = [
   {
     layer: "infrastructure",
     label: "Infrastructure",
+    requestStep: "Runs on Azure, shipped by GitHub Actions",
     summary:
       "I deploy to Azure App Service and automate builds and Prisma migrations with GitHub Actions.",
     skills: [

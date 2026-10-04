@@ -83,7 +83,7 @@ export function Contact() {
     <ContactStage id="contact" labelledBy="contact-heading">
       <div className="container-page">
         {availability.open ? (
-          <p className="contact-status">
+          <p className="status-pill">
             <span aria-hidden="true" className="relative flex size-2">
               <span className="absolute inline-flex size-full rounded-full bg-emerald-700 opacity-60 motion-safe:animate-ping dark:bg-emerald-300" />
               <span className="relative inline-flex size-2 rounded-full bg-emerald-700 dark:bg-emerald-300" />

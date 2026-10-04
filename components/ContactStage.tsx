@@ -126,7 +126,7 @@ export function ContactStage({
         id={id}
         aria-labelledby={labelledBy}
         onPointerMove={onPointerMove}
-        className="contact-stage"
+        className="contact-stage cursor-grid"
       >
         {children}
       </section>

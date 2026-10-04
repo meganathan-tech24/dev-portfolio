@@ -231,21 +231,21 @@ test.describe("accessibility (axe)", () => {
   });
 });
 
-const LAYERS = "figure .load-drop";
+const LAYERS = ".stack-plate .plate-drop";
 
 test.describe("hero load animation", () => {
   test("plays on load and ends fully visible, with the name expanded", async ({ page }) => {
     await openHome(page);
-    // the sequence takes about 1.6s in total
-    await page.waitForTimeout(2200);
+    // the stack has separated after about 2s
+    await page.waitForTimeout(2600);
 
     const layers = page.locator(LAYERS);
     await expect(layers).toHaveCount(4);
     for (let i = 0; i < 4; i++) {
       await expect(layers.nth(i)).toHaveCSS("opacity", "1");
     }
-    await expect(page.locator(".name-letter").first()).toHaveCSS("font-stretch", "125%");
-    await expect(page.locator(".layer-line").first()).toHaveCSS("transform", "none");
+    await expect(page.locator(".name-letter").first()).toHaveCSS("font-stretch", "116%");
+    await expect(page.locator(".plate-sep").first()).toHaveCSS("transform", "none");
   });
 
   test("does not shift the layout noticeably", async ({ page }) => {
@@ -934,11 +934,11 @@ test.describe("reduced motion", () => {
   test("nothing animates and everything is in its final state at once", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
 
-    // no request trace at all with reduced motion
-    await expect(page.locator(".trace-dot")).toBeHidden();
-    await expect(page.locator(".layer-pulse").first()).toHaveCSS("animation-name", "none");
+    // no request trace at all with reduced motion: the dot never appears and there is no Pause
+    await expect(page.locator(".stack-dot")).toHaveAttribute("opacity", "0");
+    await expect(page.locator(".stage-toggle")).toBeHidden();
 
-    for (const selector of [".load-drop", ".load-draw", ".name-letter"]) {
+    for (const selector of [".plate-drop", ".circuit-trace", ".name-letter"]) {
       await expect(page.locator(selector).first()).toHaveCSS("animation-name", "none");
     }
     const layers = page.locator(LAYERS);
@@ -946,7 +946,7 @@ test.describe("reduced motion", () => {
     for (let i = 0; i < 4; i++) {
       await expect(layers.nth(i)).toHaveCSS("opacity", "1");
     }
-    await expect(page.locator(".name-letter").first()).toHaveCSS("font-stretch", "125%");
+    await expect(page.locator(".name-letter").first()).toHaveCSS("font-stretch", "116%");
 
     // no scroll effects: nothing hidden, no progress bar, timeline complete
     await expect(page.locator("[data-reveal-state]")).toHaveCount(0);
@@ -992,7 +992,7 @@ test.describe("without JavaScript", () => {
     await page.goto("/");
 
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(site.name);
-    await expect(page.getByText(site.tagline)).toBeVisible();
+    await expect(page.getByText(site.now)).toBeVisible();
     for (const item of site.nav) {
       await expect(page.locator(`#${item.id}`)).toBeAttached();
     }
